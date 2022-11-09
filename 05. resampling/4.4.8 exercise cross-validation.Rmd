@@ -1,0 +1,60 @@
+---
+title: "cross-validation"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+8. We will now perform cross-validation on a simulated data set.
+
+(a) Generate a simulated data set as follows: 
+# > set .seed(1)?
+# > x=rnorm(100) 
+# > y=x-2* x^2+ rnorm (100)
+In this data set, what is n and what is p? Write out the model used to generate the data in equation form.
+```{R}
+set.seed(1)
+x = rnorm(100)
+y = x- 2*x^2 + rnorm(100)
+
+# n=100 p=y
+```
+
+(b) Create a scatterplot?of X against Y. Comment on what you find.
+```{R}
+plot(x,y)
+```
+
+(c) Set a random seed, and then compute the LOOCV errors that result from fitting the following four models using least squares:
+  i. Y = ¦Â0 + ¦Â1X + 
+  ii. Y = ¦Â0 + ¦Â1X + ¦Â2X2 +  
+  iii? Y = ¦Â0 + ¦Â1X + ¦Â2X2 + ¦Â3X3 +  
+  iv. Y = ¦Â0 + ¦Â1X + ¦Â2X2 + ¦Â3X3 + ¦Â4X4 + . 
+  Note you may find it helpful to use the data.frame() function to create a single data set containing both X and Y.
+  
+```{R}
+set.seed(12)
+loocv =rep(NA,4)
+data_set <-?data.frame(x,y)
+for (i in 1:4){
+  glm.fit <- glm(y~poly(x,i), data=data_set)
+  cv.loo <- cv.glm(data_set, glm.fit, K=10)
+  loocv[i] <- cv.loo$delta[1]
+}
+loocv
+```
+
+(f) Comment on the statistical significance of the coefficient estimates that results from f?tting each of the models in (c) using least squares. Do these results agree with the conclusions drawn based on the cross-validation results?
+
+```{R}
+lm.fit <- glm(y~poly(x,1), data=data_set)
+summary(lm.fit)
+lm.fit <- glm(y~poly(x,2), data=data_set)
+summar?(lm.fit)
+lm.fit <- glm(y~poly(x,3), data=data_set)
+summary(lm.fit)
+lm.fit <- glm(y~poly(x,4), data=data_set)
+summary(lm.fit)
+```

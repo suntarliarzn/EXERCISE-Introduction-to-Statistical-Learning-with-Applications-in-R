@@ -1,0 +1,66 @@
+---
+title: "7.9.6 polynomial regression with cv"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. data processing
+```{R}
+library(ISLR)
+library(boot)
+summary(Wage)
+head(Wage)
+attach(Wage)
+```
+
+(a) Perform polynomial regression to predict wage using age.Use cross-validation to select the optimal degree d for the polynomial. What degree was chosen, and how does this compare to the results of hypothesis testing using ANOVA? Make a plot of the resulting polynomial fit to the data.
+
+2.select the optimal degree d
+```{R}
+set.seed(1)
+cv.error=rep(NA,10)
+for (i in 1:10){
+  pl.fit=glm(wage~poly(age,i))
+  cv.error[i]=cv.glm(Wage,pl.fit, K=10)$delta
+}
+plot(cv.error,  type="b")
+```
+
+3. ANOVA
+```{r}
+glm.fit1=glm(wage~age)
+glm.fit2=glm(wage~poly(age,3))
+glm.fit3=glm(wage~poly(age,4))
+glm.fit4=glm(wage~poly(age,5))
+anova(glm.fit1,glm.fit2,glm.fit3,glm.fit4,test="F")
+```
+
+(b) Fit a step function to predict wage using age, and perform crossvalidation to choose the optimal number of cuts. Make a plot of the fit obtained.
+4.Cross validation to choose optimal number of cuts
+```{R}
+set.seed(1)
+cv.error1=rep(NA,19)
+for (i in 2:20){
+  Wage$age.cut = cut(Wage$age,i)
+  step.fit=glm(wage~age.cut, data=Wage)
+  cv.error1[i-1]=cv.glm(Wage,step.fit, K=10)$delta[1]
+}
+plot(cv.error1,  type="b")
+# optimal number=7+1
+```
+
+5. step function with optimal number
+```{R}
+agelims=range(age)
+age.grid=seq(from=agelims[1],to=agelims[2])
+
+step.fit1=glm(wage~cut(age,8))
+pred=predict(step.fit1,newdata=list(age=age.grid), se=T)
+se.bands=cbind(pred$fit+2*pred$se.fit,pred$fit-2*pred$se.fit)
+plot(age,wage,cex=.5,col="darkgrey")
+lines(age.grid, pred$fit, col="orange", lwd=2)
+matlines(age.grid, se.bands, col="blue", lwd=2, lty=3)
+```

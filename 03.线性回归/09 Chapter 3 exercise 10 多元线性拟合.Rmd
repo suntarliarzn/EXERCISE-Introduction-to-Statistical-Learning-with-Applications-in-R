@@ -1,0 +1,48 @@
+---
+title: "chaoter 3 exercise 10"
+output: html_document
+---
+
+10. This question should be answered using the Carseats data set.
+(a) Fit a multiple regression model to predict Sales using Price, Urban,and US.
+```R
+fit1 <- lm(Sales~Price+Urban+US, data=Carse?ts)
+summary(fit1)
+```
+(b) Provide an interpretation of each coefficient in the model. Be careful¡ªsome of the variables in the model are qualitative!
+```R
+fit1
+contrasts(Carseats$Urban)
+contrasts(Carseats$US)
+```
+(c) Write out the model in equation form, b?ing careful to handle the qualitative variables properly.
+y=13.04-0.054*Price-0.022\*Urban{0,1}+1.2\*US{0,1}
+
+(d) For which of the predictors can you reject the null hypothesis H0 : ¦Âj =0?
+
+CompPrice,Income, Advertising, Price,ShelveLoc,Age
+
+(e) On the ba?is of your response to the previous question, fit a smaller model that only uses the predictors for which there is evidence of association with the outcome.
+```R
+fit2 <- lm(Sales~CompPrice+Income+Advertising+Price+ShelveLoc+Age, data=Carseats)
+summary(fit2?
+```
+
+(f) How well do the models in (a) and (e) fit the data?
+87%>23%
+
+(g) Using the model from (e), obtain 95% confidence intervals for the coefficient(s).
+```R
+confint(fit2)
+```
+
+(h) Is there evidence of outliers or high leverage observations in the mode? from (e)?
+```R
+plot(fit2)
+```
+one outlier
+one high leverage observation
+```R
+rstudent(fit2)[which(rstudent(fit2)>3)]
+hatvalues(fit2)[order(hatvalues(fit2), decreasing = T)][1]
+```

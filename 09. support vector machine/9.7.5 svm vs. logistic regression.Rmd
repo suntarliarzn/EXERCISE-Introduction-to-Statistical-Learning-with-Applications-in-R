@@ -1,0 +1,55 @@
+---
+title: "9.7.5 svm vs. logistic regression"
+output: github_document
+---
+# 1.data preparation
+```{R}
+x1 <- runif (500) - 0.5
+x2 <- runif (500) - 0.5
+y <- 1 * (x1^2 - x2^2 > 0)
+dat=data.frame(x1,x2,y=as.factor(y))
+plot(x1,x2, col=y+1, pch=19)
+```
+
+# 2.logistical regression
+```{R}
+library(glmnet)
+log.fit=glm(y~.,dat, family=binomial)
+log.pred=predict(log.fit, dat, type=c("response"))
+glm.preds = rep(0,500)
+glm.preds[log.pred>0.50] = 1
+table(preds=glm.preds, truth=dat$y)
+# error rate: 183+107/500
+plot(x1,x2,col=2-glm.preds)
+```
+
+# 3. logistical regression with non-linear x
+```{R}
+library(glmnet)
+log2.fit=glm(y~I(x1^2)+I(x2^2),dat, family=binomial)
+log2.pred=predict(log2.fit, dat, type=c("response"))
+glm.preds2 = rep(0,500)
+glm.preds2[log2.pred>0.50] = 1
+table(preds=glm.preds2, truth=dat$y)
+# error rate: 0
+plot(x1,x2,col=2-glm.preds2)
+```
+
+# 4. svc
+```{R}
+library(e1071)
+svc.fit=tune(svm, y~., data=dat, kernel="linear")
+svc.pred=predict(svc.fit$best.model,dat, type="response")
+table(preds=svc.pred, truth=dat$y)
+# error rate: (114+121)/500
+plot(x1,x2,col=svc.pred)
+```
+
+# 4. svm
+```{R}
+svm.fit=tune(svm, y~., data=dat, kernel="radial", ranges=list(cost=c(0.001,0.01,0.1,1,2,5,10,100), gamma=c(0.5,1,2,3,4)))
+svm.pred=predict(svm.fit$best.model,dat, type="response")
+table(preds=svm.pred, truth=dat$y)
+# error rate: (2)/500
+plot(x1,x2,col=svm.pred)
+```

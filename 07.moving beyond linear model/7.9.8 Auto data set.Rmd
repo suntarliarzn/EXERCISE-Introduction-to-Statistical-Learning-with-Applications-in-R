@@ -1,0 +1,43 @@
+---
+title: "7.9.8 Auto data set"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+1. data explorration
+```{R}
+library(ISLR)
+library(boot)
+library(gam)
+summary(Auto)
+head(Auto)
+plot(Auto)
+attach(Auto)
+```
+
+2. mpg&weight
+```{r}
+fit.1=lm(mpg~weight)
+fit.2=lm(mpg~poly(weight,2))
+fit.3=lm(mpg~poly(weight,3))
+fit.4=lm(mpg~poly(weight,4))
+fit.5=lm(mpg~poly(weight,5))
+anova(fit.1,fit.2,fit.3,fit.4,fit.5)
+# best model fit.2
+```
+
+3. make prediction with best model
+```{R}
+weight.lim=range(weight)
+weight.grid=seq(from=weight.lim[1], to=weight.lim[2])
+preds1=predict(fit.1, newdata = list(weight=weight.grid), se=T)
+preds2=predict(fit.2, newdata = list(weight=weight.grid), se=T)
+preds5=predict(fit.5, newdata = list(weight=weight.grid), se=T)
+plot(weight,mpg, xlim=weight.lim, cex=0.5, col="grey")
+lines(weight.grid, preds1$fit, lwd=2,lty=2, col="blue")
+lines(weight.grid, preds2$fit, lwd=2, col="red")
+lines(weight.grid, preds5$fit, lwd=2,lty=2, col="green")
+
+```

@@ -1,0 +1,44 @@
+---
+title: "7.9.7 Wage dataset with other variables"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1. data processing
+```{R}
+library(ISLR)
+library(boot)
+library(gam)
+summary(Wage)
+head(Wage)
+attach(Wage)
+```
+
+2. age&marital status data exploration
+```{R}
+boxplot(wage~maritl, data=Wage, main="Wage given marital status", xlab="Marital Status",ylab="Wage (Thousands of $)")
+table(maritl)
+```
+
+3. GAM with maritl
+```{R}
+gam.model = gam(wage~maritl, data=Wage)
+plot.Gam(gam.model, se=T)
+```
+
+4. age&race status data exploration
+```{R}
+table(race)
+boxplot(wage~race)
+gam.model1 = gam(wage~race, data=Wage)
+plot.Gam(gam.model1, se=T)
+
+Wage.white=Wage[which(Wage$race=="1. White"),]
+summary(Wage.white)
+Wage.asian=Wage[which(Wage$race=="3. Asian"),]
+summary(Wage.asian)
+```

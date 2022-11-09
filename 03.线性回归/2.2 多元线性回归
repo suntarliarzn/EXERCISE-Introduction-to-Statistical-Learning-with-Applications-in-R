@@ -1,0 +1,36 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1.多元独立变量回归
+
+```R
+> library(MASS)
+> library(ISLR)
+> head(Boston)
+> fit <- lm(medv~lstat+age,data=Boston)
+> summary(fit)
+
+```
+2.检测全部变量
+```R
+> fit1 <- lm(medv~.,data = Boston)
+> summary(fit1)
+> fit2 <- lm(medv~.-age-indus,data = Boston)
+> summary(fit2)
+```
+
+3.检查多重共线性
+```r
+> install.packages("car")
+> library(car)
+> vif(fit)
+```
+
+3. 多元相关变量
+```R
+> fit3 <- lm(medv~lstat * age,data=Boston)
+> fit3
+> summary(fit3)
+```

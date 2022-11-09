@@ -1,0 +1,92 @@
+---
+title: "3.8 chapter 4 exercise 10"
+output: html_document
+---
+
+(a)Produce some numerical and graphical summaries of the Weekly data. Do there appear to be any patterns?
+```{R}
+library(ISLR)
+head(Weekly)
+summary(Weekly)
+table(Direction)
+plot(Volume)
+plot(Year,Volume)
+cor(Weekly[1:8])
+```
+
+(b) Use the full data set to perform a logistic regression with Direction as the response and the five lag variables plus Volume as predictors. Use the summary function to print the results. Do any of the predictors appear to be statistically significant? If so, which ones?
+```{R}
+log.fit <- glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume, data= Weekly, family=binomial)
+summary(log.fit)
+#Lag2 significant
+```
+
+(c) Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
+```{R}
+log.pred <- predict(log.fit, type="response")
+log.pred[which(log.pred>0.5)] <- "Up"
+log.pred[which(log.pred<0.5)] <- "Down"
+table(log.pred, Direction)
+mean(log.pred==Direction)
+# 0.561
+```
+
+(d) Now fit the logistic regression model using a training data period from 1990 to 2008, with Lag2 as the only predictor. Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).
+```{R}
+train_data <- subset(Weekly, Year<2009)
+test_data <- subset(Weekly, Year>=2009)
+test_direction <- Direction[which(Year>=2009)]
+gim.fit2 <- glm(Direction~Lag2, data=train_data, family="binomial")
+glm.pred <- predict(gim.fit2, test_data, type ="response")
+glm.pred[which(glm.pred>0.5)] <- "Up"
+glm.pred[which(glm.pred<0.5)] <- "Down"
+table(glm.pred,test_direction)
+mean(glm.pred==test_direction)
+# 0.4423077
+```
+
+(e) Repeat (d) using LDA. (f) Repeat (d) using QDA. (g) Repeat (d) using KNN with K =1.
+```{R}
+#LDA
+library(MASS)
+lda.fit <- lda(Direction~Lag2, data=train_data)
+lda.pred <- predict(lda.fit, test_data)
+lda.prob <- (data.frame(lda.pred))
+head(lda.prob)
+table(lda.prob$class,test_direction)
+mean(lda.prob$class==test_direction)
+#0.625
+
+#QDA
+qda.fit <- qda(Direction~Lag2, data=train_data)
+qda.pred <- predict(qda.fit,test_data)
+qda.prob <- data.frame(qda.pred)
+head(qda.prob)
+table(qda.prob$class,test_direction)
+mean(qda.prob$class==test_direction)
+#0.5865
+
+#knn
+train=(Year<2009)
+set.seed(1)
+train_diknn.pred <- knn(data.frame(train_lag2),data.frame(test_lag2), train_direction,k=1)
+table(knn.pred,test_direction)
+mean(knn.pred==test_direction)
+# 0.52
+```
+(h) Which of these methods appears to provide the best results on this data?
+LDA
+
+(i) Experiment with different combinations of predictors, including possible transformations and interactions, for each of the methods. Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data. Note that you should also experiment with values for K in the KNN classifier.
+
+```{R}
+# K=3
+knn.pred <- knn(data.frame(train_lag2),data.frame(test_lag2), train_direction,k=3)
+mean(knn.pred==test_direction)
+# 0.538
+
+#K=5
+knn.pred <- knn(data.frame(train_lag2),data.frame(test_lag2), train_direction,k=5)
+mean(knn.pred==test_direction)
+#0.5288462
+```

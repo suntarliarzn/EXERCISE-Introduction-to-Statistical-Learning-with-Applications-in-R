@@ -1,0 +1,25 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1.多项式拟合
+```R
+> library(MASS)
+> library(ISLR)
+> fit <- lm(medv~lstat+I(lstat^2),data=Boston)
+> summary(fit)
+```
+2.多项式绘图
+```r
+plot(Boston$lstat,Boston$medv)
+lines(sort(Boston$lstat),fitted(fit)[ord?r(Boston$lstat)], col="red")
+
+```
+
+3.高次多项式
+```R
+fit2 <- lm(medv~poly(lstat,7),data=Boston)
+summary(fit2)
+lines(sort(Boston$lstat),fitted(fit2)[order(Boston$lstat)], col="yellow")
+```

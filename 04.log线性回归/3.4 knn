@@ -1,0 +1,24 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1.knn¾ÛÀà·ÖÎö
+```{R}
+library(class)
+?knn
+train <- cbind(Lag1,Lag2)[train,]
+test <- cbind(Smarket.2005$Lag1,Smarket.2005$Lag2)
+train.direction<- Smarket$Direction[which(Smarket$Year!=2005)]
+knn.pred <- knn(?rain,test, train.direction, k=1)
+table(knn.pred,Smarket.2005$Direction)
+mean(knn.pred==Smarket.2005$Direction)
+
+#K=10
+knn.pred2 <- knn(train,test, train.direction, k=10)
+mean(knn.pred2==Smarket.2005$Direction)
+
+#K=3
+knn.pred2 <- knn(train,test, train.direc?ion, k=3)
+mean(knn.pred3==Smarket.2005$Direction)
+```

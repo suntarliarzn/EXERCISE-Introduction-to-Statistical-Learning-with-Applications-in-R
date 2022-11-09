@@ -1,0 +1,42 @@
+---
+title: "6.8.6 exercise 6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.ridge regression coefficient estimate
+```{R}
+y=10
+beta=seq(-10,10,0.1)
+lambda = 5
+
+eqn1=(y-beta)^2+lambda*beta^2
+which.min(eqn1)
+plot(beta,eqn1,type="l")
+
+#formula estimate
+est.beta=y/(1+lambda)
+est.value=(y-est.beta)^2+lambda*(est.beta^2)
+points(beta[118],eqn1[118],col="red", pch=24,type = "p")
+points(est.beta, est.value,col="blue",pch=20,type ="p")
+```
+
+2.lasso regression coefficient estimate
+```{R}
+y=10
+beta=seq(-10,10,0.1)
+lambda = 5
+
+eqn2=(y-beta)^2+lambda*(abs(beta))
+which.min(eqn2)
+plot(beta,eqn2, type="l")
+
+#formula estimate
+est.beta2=y-lambda/2
+est.value2=(y-est.beta2)^2+lambda*(abs(est.beta2))
+points(beta[176],eqn2[176],col="red", pch=24,type = "p")
+points(est.beta2, est.value2,col="blue",pch=20,type ="p")
+```

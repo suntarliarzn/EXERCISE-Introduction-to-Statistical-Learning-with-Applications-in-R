@@ -1,0 +1,79 @@
+---
+title: "6.5.1"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1.????ȱʧֵ
+```{r}
+library(ISLR)
+summary(Hitters)
+is.na(Hitters)
+hitters=na.omit(Hitters)
+```
+
+2.computin? subset
+```{r}
+library(leaps)
+regfit.full=regsubsets(Salary~., hitters)
+summary(regfit.full)
+regfit1.full=regsubsets(Salary~., hitters, nvmax=19)
+summary(regfit1.full)
+```
+
+3.bust subset selection
+```{R}
+sum.regfit.full=summary(regfit1.full)
+names(sum.regfit.full)
+sum.regfit.full$rss
+sum.regfit.full$bic
+```
+
+4.plot the RSS
+```{r}
+par(mfrow=c(2,2))
+plot(sum.regfit.full$rss,xlab="Number of Variables ",ylab=" RSS", type="l")
+plot(sum.regfit.full$rsq,xlab="Number of Variables ",ylab=" R2", type="l")
+plot(sum.regfit.full$bic,xlab="Number of Variables ",ylab=" bic", type="l")
+plot(sum.regfit.full$adjr2,xlab="Number of Variables ",ylab="adjr2", type="l")
+which.max (sum.regfit.full$adjr2)
+points (11, sum.regfit.full$adjr2[11], col ="red",cex =2, pch =20)
+coef(regfit1.full,6)
+coef(regfit1.full,11)
+```
+
+5.?lot the subset in one plot
+```{R}
+plot(regfit1.full ,scale="r2")
+plot(regfit1.full ,scale="adjr2")
+plot(regfit1.full ,scale="Cp")
+plot(regfit1.full ,scale="bic")
+coef(regfit1.full,6)
+```
+
+6. forward stepwise selection
+```{R}
+regfit1.fwd=regsubsets(Salary~., hitters, nvmax=19, method="forward")
+summary(regfit1.fwd)
+
+regfit1.bwd=regsubsets(Salary~., hitters, nvmax=19, method="backward")
+summary(regfit1.bwd)
+
+#best subset
+coef(regfit1.full,6)
+#forward
+coef(regfit1.fwd,6)
+#backward
+coef(regfit1.bwd,6)
+
+plot(summary(regfit1.full)$bic,xlab="Number of Variables ",ylab="full bic", type="l")
+plot(summary(regfit1.fwd)$bic,xlab="Number of Variables ",ylab="forward bic", type="l")
+plot(summary(regfit1.bwd)$bic,xlab="Number of Variables ",ylab="backward bic", type="l")
+
+```

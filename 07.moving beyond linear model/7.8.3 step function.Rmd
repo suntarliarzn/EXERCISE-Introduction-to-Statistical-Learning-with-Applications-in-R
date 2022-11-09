@@ -1,0 +1,34 @@
+---
+title: "7.8.3 step function"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.break points
+```{R}
+library(ISLR)
+library(stats)
+attach(Wage)
+agelims=range(age)
+age.grid=seq(from=agelims [1], to=agelims [2])
+table(cut(age,breaks = c(17,34,49,65,81)))
+```
+
+2.fit the step function
+```{R}
+fit=lm(wage~cut(age,breaks=c(17,34,49,65,81)),data=Wage)
+summary(fit)
+pred=predict(fit, newdata = list(age=age.grid),se=T)
+```
+
+3.plot the step function
+
+```{R}
+plot(age, wage, xlim=agelims, cex =.5, col =" darkgrey ", ylim = c(0,200))
+lines(age.grid, pred$fit, lwd=2, col="blue")
+se.band=cbind(pred$fit-2*pred$se.fit, pred$fit+2*pred$se.fit)
+matlines(age.grid, se.band, lwd=1, col="red", lty=3)
+```

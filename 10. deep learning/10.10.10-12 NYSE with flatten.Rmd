@@ -1,0 +1,160 @@
+---
+title: "10.10.10-12 NYSE with flatten"
+output: github_document
+---
+# 1.data preparation
+```{R}
+library(ISLR2)
+library(keras)
+library(tensorflow)
+x.data <- data.matrix(
+  NYSE[,c("DJ_return","log_volume","log_volatility")]
+)
+y <- NYSE[,"train"]
+x <- scale(x.data)
+```
+
+# 2.data processing
+```{R}
+# 构造一个用前五天成交数据来预测当天成交量的数据集
+lagm <- function(x,k=1){
+  n <- nrow(x)
+  pad <- matrix(NA, k,ncol(x))
+  rbind(pad, x[1:(n-k),])
+  }
+arframe <- data.frame(log_volume = x[, "log_volume"], L1 = lagm(x , 1), L2 = lagm(x, 2), L3 = lagm(x , 3), L4 = lagm(x , 4), L5 = lagm(x , 5))
+arframe <- arframe[-(1:5),]
+y <- y[-(1:5)]
+# install.packages("stringr") 正则表达式提取出月份加入数据中
+library(stringr)
+date <- NYSE$date
+date_str <- str_extract_all(date,"\\d+")
+mon=integer()
+for (i in c(1:6051)){
+  mon_str=date_str[[i]][2]
+  mon[i]=as.numeric(mon_str)
+}
+mon <- as.factor(mon)
+df <- data.frame(mon=mon[-(1:5)],day=NYSE[-(1:5),"day_of_week"], arframe)
+```
+# 3.lm with MONTH
+```{R}
+
+# install.packages("stringr") 正则表达式提取出月份加入数据中
+library(stringr)
+date <- NYSE$date
+date_str <- str_extract_all(date,"\\d+")
+mon=integer()
+for (i in c(1:6051)){
+  mon_str=date_str[[i]][2]
+  mon[i]=as.numeric(mon_str)
+}
+mon <- as.factor(mon)
+df <- data.frame(mon=mon[-(1:5)],day=NYSE[-(1:5),"day_of_week"], arframe)
+
+lm.fit <- lm(log_volume~.,data=df[y,])
+lm.pred <- predict(lm.fit, df[!y,])
+
+v <- var(df[!y,"log_volume"])
+1-mean((lm.pred-df[!y,"log_volume"])^2)/v
+# R^2=0.4599 加入month变为 R^2=0.4629
+```
+
+# 4. flatten linear AR model
+
+```{R}
+x <- model.matrix(log_volume~.-1, data=df)
+colnames(x)
+
+model <- keras_model_sequential()%>%layer_dense(units=1)
+model %>% compile(optimizer=optimizer_rmsprop(), loss="mse")
+model %>% fit(x[y, ], df[y,"log_volume"], batch_size = 64, epochs = 50, validation_data = list(x[!y,], df[!y , "log_volume"])
+)
+r.pred <- predict(model,x[!y,])
+1-mean((r.pred-df[!y,"log_volume"])^2)/v
+# R^2=0.454
+```
+
+# 5. flatten nonlinear AR model
+```{R}
+model <- keras_model_sequential()
+model %>% layer_dense(units = 32, activation = "relu", input_shape = ncol(x)) %>% layer_dropout(rate=0.5) %>%layer_dense(units=1)
+model %>% compile(optimizer=optimizer_rmsprop(), loss="mse")
+model %>% fit(x[y, ], df[y,"log_volume"], batch_size = 64, epochs = 50, validation_data = list(x[!y,], df[!y , "log_volume"])
+)
+r.pred <- predict(model,x[!y,])
+1-mean((r.pred-df[!y,"log_volume"])^2)/v
+# R^2=0.4709154
+```
+
+# 6. RNN with day_of_week
+
+```{R}
+arfame1=arframe[,-1]
+week <- as.factor(NYSE[-(1:5),"day_of_week"])
+num.week <- as.numeric(week)
+num.month <- as.numeric(mon[-(1:5)])
+df1 <- data.frame(mon=num.month,day=num.week, arfame1[,1:3])
+df2 <- data.frame(mon=num.month,day=num.week, arfame1[,4:6])
+df3 <- data.frame(mon=num.month,day=num.week, arfame1[,7:9])
+df4 <- data.frame(mon=num.month,day=num.week, arfame1[,10:12])
+df5 <- data.frame(mon=num.month,day=num.week, arfame1[,13:15])
+rnn.d <- data.frame(df1,df2,df3,df4,df5)
+n <- nrow(rnn.d)
+xrnn <- data.matrix(rnn.d)
+xrnn <- array(xrnn,c(n,5,5))
+xrnn <- xrnn[,,5:1]
+# 转置矩阵 将自变量作为分组依据
+xrnn <- aperm(xrnn,c(1,3,2))
+
+
+model <- keras_model_sequential()
+model %>% layer_simple_rnn(units=12,input_shape=list(5,5), dropout=0.1, recurrent_dropout = 0.1) %>% layer_dense(units=1)
+model %>% compile(optimizer=optimizer_rmsprop(), loss="mse")
+model %>% fit( xrnn[y,, ], arframe[y, "log_volume"], batch_size = 64, epochs = 100, validation_data = list(xrnn[!y,, ], arframe[!y , "log_volume"])
+)
+r.pred <- predict(model,xrnn[!y,,])
+1-mean((r.pred-arframe[!y,"log_volume"])^2)/v
+# R^2=0.4454
+
+```
+
+```{R}
+x.data <- data.matrix(
+  NYSE[,c("DJ_return","log_volume","log_volatility")]
+)
+y <- NYSE[,"train"]
+x <- scale(x.data)
+x1 <- cbind(date=as.factor(mon),day_of_week=as.factor(NYSE[,"day_of_week"]), x)
+
+lagm <- function(x,k=1){
+  n <- nrow(x)
+  pad <- matrix(NA, k,ncol(x))
+  rbind(pad, x[1:(n-k),])
+  }
+arframe <- data.frame(log_volume = x1[, "log_volume"], L1 = lagm(x1 , 1), L2 = lagm(x1, 2), L3 = lagm(x1 , 3), L4 = lagm(x1 , 4), L5 = lagm(x1 , 5))
+arframe <- arframe[-(1:5),]
+y <- y[-(1:5)]
+
+df1 <- arframe[,2:6]
+df2 <- arframe[,7:11]
+df3 <- arframe[,12:16]
+df4 <- arframe[,17:21]
+df5 <- arframe[,22:26]
+rnn.d <- data.frame(df1,df2,df3,df4,df5)
+n <- nrow(rnn.d)
+xrnn <- data.matrix(rnn.d)
+xrnn <- array(xrnn,c(n,5,5))
+xrnn <- xrnn[,,5:1]
+# 转置矩阵 将自变量作为分组依据
+xrnn <- aperm(xrnn,c(1,3,2))
+
+model <- keras_model_sequential()
+model %>% layer_simple_rnn(units=12,input_shape=list(5,5), dropout=0.1, recurrent_dropout = 0.1) %>% layer_dense(units=1)
+model %>% compile(optimizer=optimizer_rmsprop(), loss="mse")
+model %>% fit( xrnn[y,, ], arframe[y, "log_volume"], batch_size = 64, epochs = 100, validation_data = list(xrnn[!y,, ], arframe[!y , "log_volume"])
+)
+r.pred <- predict(model,xrnn[!y,,])
+1-mean((r.pred-arframe[!y,"log_volume"])^2)/v
+# 0.4297
+```

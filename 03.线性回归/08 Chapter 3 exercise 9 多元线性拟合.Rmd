@@ -1,0 +1,36 @@
+---
+title: "08.chapter 3 exercise 9"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This question involves the use of multiple linear regression on the Auto data set.
+(a) Produce a scatterplot matrix which inc?udes all of the variables in the data set.
+```R
+plot(Auto)
+```
+(b) Compute the matrix of correlations between the variables using the function cor(). You will need to exclude the name variable, which is qualitative.
+```R
+auto_num <- Auto[,-9]
+cor(auto_num)?
+```
+(c) Use the lm() function to perform a multiple linear regression with mpg as the response and all other variables except name as thepredictors. Usethe summary() function to print the results. Comment on the output. For instance:   i. Is there a relat??nship between the predictors and the response?
+  Yes
+  ii. Which predictors appear to have a statistically significant relationship to the response?
+  predictors like displacement, weight,year and origin
+  iii. What does the coefficient for the year varia??e suggest?
+  the newest year, the longest mpg
+(d) Use the plot() function to produce diagnostic plots of the linear regression fit. Comment on any problems you see with the fit. Do the residual plots suggest any unusually large outliers? Does the leverage??lot identify any observations with unusually high leverage?
+  1.linear regression is not the best option.
+  ```R
+  rstudent(mpg_all)[which(rstudent(mpg_all)>3)]
+  ```
+  2.large outlier
+  3.no
+(e) Use the * and : symbols to fit linear regression models wit??interaction effects. Do any interactions appear to be statistically significant?
+no
+(f) Try a few different transformations of the variables, such as log(X),
+âˆ? X, X2. Comment on your findings.
+

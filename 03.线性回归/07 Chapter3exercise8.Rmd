@@ -1,0 +1,40 @@
+---
+title: "excercise lm 3.8"
+output: html_document
+---
+
+This question involves the use of simple linear regression on the Auto data set.
+(a) Use the lm() function to perform a simple linear regression with mpg as the response and horsepower as the predict?r. Use the summary() function to print the results. Comment on the output. For example:
+
+```{R}
+library("ISLR")
+attach(Auto)
+fit <- lm(mpg~horsepower)
+summary(fit)
+```
+1.Is there a relationship between the predictor and the response?
+Yes, p-value<0.05
+
+2.H?w strong is the r?lationship between the predictor and the response?
+R^2=0.60, relatively strong.
+
+3.Is the relationship between the predictor and the response positive or negative?
+negative
+
+4.What is the predicted mpg associated with a horsepower of 98? ?hat are the assoc?ated 95% confidence and prediction intervals?
+24.46708 
+```{R}
+predict(fit, data.frame(horsepower=98), interval="prediction")
+predict(fit, data.frame(horsepower=98), interval="confidence")
+```
+5.Plot the response and the predictor. Use th? abline() function to display the least squares regression line.
+```{R}
+plot(horsepower,mpg)
+abline(fit,col="blue")
+```
+
+6.Use the plot() function to produc? diagnostic plots of the least squares regression fit. Comment on any problems you see with the fit?
+```{R}
+plot(fit)
+```
+polomonial line would be better.

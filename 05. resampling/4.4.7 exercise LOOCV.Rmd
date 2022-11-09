@@ -1,0 +1,82 @@
+---
+title: "4.4.7 LOOCV"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In Sections 5.3.2 and 5.3.3, we saw that the cv.glm() function can be used in order to compute the LOOCV test error estimate. Alternat?vely, one could compute those quantities using just the glm() and predict.glm() functions, and a for loop. You will now take this approach in order to compute the LOOCV error for a simple logistic regression model on the Weekly data set. Recall that in the?context of classification problems, the LOOCV error is given in (5.4).
+
+(a) Fit a logistic regression model that predicts Direction using Lag1 and Lag2.
+```{r}
+library(ISLR)
+library(MASS)
+set.seed(222)
+library(boot)
+glm.fit <- glm(Direction~Lag1+Lag2, data?Weekly, family = "binomial")
+summary(glm.fit)
+```
+
+(b/c) Fit a logistic regression model that predicts Direction using Lag1 and Lag2 using all but the first observation.
+```{r}
+weekly_without_first <- Weekly[-1,]
+glm.fit1 <- glm(Direction~Lag1+Lag2, data=w?ekly_without_first, family = "binomial")
+summary(glm.fit1)
+predict(glm.fit1,Weekly[1,],type = "response")
+# p=0.57>0.5 then up->incorrect
+```
+
+(d) Write a for loop from i =1 to i = n,where n is the number of observations in the data set, that performs each?of the following steps:
+  i. Fit a logistic regression model using all but the ith observation to predict Direction using Lag1 and Lag2.
+  ii. Compute the posterior probability of the market moving up for the ith observation.
+  iii. Use the posterior proba?ility for the ith observation in order to predict whether or not the market moves up.
+  iv. Determine whether or not an error was made in predicting the direction for the ith observation. If an error was made, then indicate this as a 1, and otherwise indic?te it as a 0.
+  
+```{R}
+lr.pre=rep(NA,length(Weekly$Direction))
+lr.err = rep(NA, length(Weekly$Direction))
+for (i in 1:length(Weekly$Direction)) {
+  new_data <- Weekly[c(-i),]
+  glm.fit <- glm(Direction~Lag1+Lag2, data=new_data, family ="binomial")
+  glm.p?e <- predict(glm.fit, Weekly[i,], type="response")
+  if (glm.pre>0.5){
+    lr.pre[i] <- "Up"
+  }
+  else{
+    lr.pre[i] <- "Down"
+  }
+  if (lr.pre[i] == Weekly$Direction[i]){
+    lr.pre[i]=1
+  }
+  else{
+    lr.pre[i]=0
+  }
+  }
+lr.pre
+
+```
+
+(e) Take the aver?ge of the n numbers obtained in (d)iv in order to obtain the LOOCV estimate for the test error. Comment on the results.
+```{R}
+table(lr.pre)
+490/(1089)
+# 0.45
+```
+
+(f) loocv function
+```{R}
+glm.fit <- glm(Direction~Lag1+Lag2, data=Weekly, family = "binomia?")
+cv.loo <- cv.glm(Weekly, glm.fit)
+cv.loo$delta 
+# $delta  cross-validation estimate of prediction error
+# $ [1] 0.2464536 0.2464530
+```
+
+(g) k-folder crossvalidation
+```{R}
+cv.K.10 <- cv.glm(Weekly, glm.fit, K=10)
+cv.K.10$delta  
+# $ 1] 0.2468049 0.2467?55
+```

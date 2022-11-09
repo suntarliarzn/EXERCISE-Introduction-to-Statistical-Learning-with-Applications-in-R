@@ -1,0 +1,54 @@
+---
+title: "10.9.1 single layer network"
+output: github_document
+---
+
+# 1.data preparation
+```{R}
+library(ISLR2)
+library(keras)
+library(tensorflow)
+hitters <- na.omit(Hitters)
+head(hitters)
+str(hitters)
+summary(hitters)
+```
+
+# 2. training dataset
+```{R}
+set.seed(119)
+ntest <- trunc(nrow(hitters)/3)
+testid <- sample(1:nrow(hitters),ntest)
+```
+
+# 3. lm fitting
+```{R}
+lm.fit <- lm(Salary~., data=hitters[-testid,])
+lm.pred <- predict(lm.fit, hitters[testid,])
+with(hitters[testid,], mean(abs(lm.pred-Salary)))
+# mse=225.36
+```
+
+# 4. lasso fitting
+```{R}
+hitters.mat <- model.matrix(Salary~.-1, data=hitters)
+x <- scale(hitters.mat)
+y <- as.matrix(hitters$Salary)
+library(glmnet)
+cv.lasso <- cv.glmnet(x[testid,], y[testid,], alpha=1)
+cv.pred <- predict(cv.lasso,x[testid,], s="lambda.min")
+mean(abs(y[testid]-cv.pred))
+# mse=197.2539
+```
+
+# 5. neural network
+```{R}
+model <- keras_model_sequential()
+model %>% layer_dense(units=50, activation = "relu", input_shape=c(20)) %>% layer_dropout(rate=0.4) %>% layer_dense(units=1)
+model %>% compile(loss="mse", optimizer=optimizer_rmsprop(), metrics=list("mean_absolute_error"))
+model %>% fit(x[-testid,], y[-testid], epochs=1000, batch_size=8, validation_data=list(x[testid,],y[testid]))
+npred <- predict(model,x[testid,])
+mean(abs(npred-y[testid]))
+# mse=237.4813
+```
+

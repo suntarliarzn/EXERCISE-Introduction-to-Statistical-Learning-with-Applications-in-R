@@ -1,0 +1,45 @@
+---
+title: "9.7.4 kernel comparison"
+output: github_document
+---
+
+# 1.data preparation
+```{R}
+library(e1071)
+set.seed(101)
+x=matrix(rnorm(100*2), ncol=2)
+x[1:30,]=x[1:30,]+3
+x[31:70,]=x[31:70,]-3
+y=c(rep(1,70), rep(2,30))
+dat=data.frame(x=x,y=as.factor(y))
+plot(x, col=y+1, pch=19)
+train=sample(100,50)
+```
+
+# 2. svm with a linear kernel
+```{R}
+svm.linear=tune(svm,y~.,data=dat[train,], kernel="linear", ranges=list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+linear.bestmod=svm.linear$best.model
+pred.linear=predict(linear.bestmod, newdata=dat[-train,])
+table(pred=pred.linear,true=dat[-train,]$y)
+# error rate:14/50
+```
+
+# 3. svm with a polynomial kernel
+```{R}
+svm.poly=tune(svm,y~.,data=dat[train,], kernel="polynomial", ranges=list(cost=c(0.001,0.01,0.1,1,5,10,100), degree=c(1,2,3,4,5)))
+poly.bestmod=svm.poly$best.model
+pred.poly=predict(poly.bestmod, newdata=dat[-train,])
+table(pred=pred.poly,true=dat[-train,]$y)
+# error rate:1/50
+```
+
+# 4. svm with a radial kernel
+```{R}
+svm.radi=tune(svm,y~.,data=dat[train,], kernel="radial", ranges=list(cost=c(0.001,0.01,0.1,1,5,10,100), gamma=c(0.5,1,2,3,4)))
+radi.bestmod=svm.radi$best.model
+pred.radi=predict(radi.bestmod, newdata=dat[-train,])
+table(pred=pred.radi,true=dat[-train,]$y)
+# error rate:0
+```
+```

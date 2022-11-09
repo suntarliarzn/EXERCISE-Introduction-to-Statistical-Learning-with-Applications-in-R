@@ -1,0 +1,36 @@
+---
+title: "7.8.2 polynomial regression with binomial response"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1.logistic regression
+```{R}
+library(ISLR)
+library(stats)
+attach(Wage)
+agelims=range(age)
+age.grid=seq(from=agelims [1], to=agelims [2])
+fit=glm(I(wage>250)~poly(age,4),data=Wage, family="binomial")
+preds=predict(fit, newdata=list(age=age.grid), se=T, type="response" )
+```
+
+2.plot the fit
+```{R}
+plot(age,I(wage>250),xlim=agelims,type="n",ylim=c(0,0.2) )
+points(jitter(age), I((wage >250)/5),cex =1, pch ="|", col ="darkgrey ") #pcl:plot character; jitter:add noise to variable
+lines(age.grid,preds$fit, col="blue", lwd=2)
+
+se.band=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+
+pfit=exp(preds$fit )/(1+exp(preds$fit ))
+se.bands.logit = cbind(preds$fit +2*preds$se.fit , preds$fit -2*preds$se.fit)
+se.bands = exp(se.bands.logit)/(1+exp(se.bands.logit))
+
+
+matlines(age.grid,se.band, col="red", lty=3)
+```

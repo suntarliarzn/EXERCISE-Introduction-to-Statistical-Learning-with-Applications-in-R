@@ -1,0 +1,72 @@
+---
+title: "8.4.9 Fitting regression tree for OJ dataset"
+output: github_document
+---
+
+# 1. data preparation
+
+```{R}
+set.seed(101)
+library(ISLR)
+library(tree)
+library(randomForest)
+attach(OJ)
+?OJ
+head(OJ)
+str(OJ)
+df=sample(1:nrow(OJ),800)
+oj.train=OJ[df,]
+oj.test=OJ[-df,]
+purchase.test=Purchase[-df]
+```
+
+# 2. fitting the tree with purchase
+```{R}
+set.seed(101)
+oj.tree=tree(Purchase~.,oj.train)
+summary(oj.tree)
+plot(oj.tree)
+text(oj.tree, cex=0.8)
+# training error rate=0.1688
+```
+
+# 3.predict on the test data
+```{R}
+oj.pred=predict(oj.tree, oj.test,type="class")
+oj.tree.mse=table(oj.pred,purchase.test)
+#        purchase.test
+# oj.pred  CH  MM
+#      CH 135  31
+#      MM  19  85
+# (31+19)/(135+31+19+85)= 0.1851852
+```
+
+# 4.cv tree
+```{R}
+set.seed(2)
+cv.oj =cv.tree(oj.tree,FUN=prune.misclass)
+cv.oj
+plot(cv.oj$size ,cv.oj$dev ,type="b")
+# best size =2
+
+```
+
+# 5. prune the tree with best tree size
+```{R}
+prune.oj=prune.misclass(oj.tree, best = 2)
+plot(prune.oj)
+text(prune.oj)
+summary(prune.oj)
+# training error rate=0.1838
+```
+
+# 6.predict on the test data with pruned tree
+```{R}
+prune.oj.pred=predict(prune.oj, oj.test,type="class")
+prune.oj.mse=table(prune.oj.pred,purchase.test)
+#              purchase.test
+# prune.oj.pred  CH  MM
+#            CH 135  38
+#            MM  19  78
+# (38+19)/(135+38+19+78)=0.2111111
+```

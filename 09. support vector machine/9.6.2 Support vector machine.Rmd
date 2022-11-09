@@ -1,0 +1,39 @@
+---
+title: "9.6.2 Support vector machine"
+output: github_document
+---
+
+# 1.data preparation
+```{R}
+set.seed(1)
+x=matrix(rnorm(200*2), ncol=2)
+x[1:100,]=x[1:100,]+2
+x[101:150,]=x[101:150,]-2
+y=c(rep(1,150), rep(2,50))
+dat=data.frame(x=x,y=as.factor(y))
+plot(x, col=y+1)
+```
+
+# 2.svm with training dataset
+```{R}
+library(e1071)
+train=sample(200,100)
+svmfit=svm(y~., data=dat[train,], kernel="radial", gamma=1, cost=1)
+plot(svmfit, dat[train,])
+summary(svmfit)
+```
+
+# 3.svm with cv
+```{R}
+set.seed(1)
+tune.out=tune(svm, y~., data=dat[train,], kernel="radial", ranges = list(cost=seq(0.01, 10, 0.1), gamma=seq(0.5,5, 0.5)))
+summary(tune.out)
+# best cost=0.91 gamma=3
+```
+
+# 4.predict with bestmod
+```{R}
+pred=predict(tune.out$best.model, newdata=dat[-train,])
+table(predict=pred, true=dat[-train,"y"])
+# eror rate= (6+5)/(71+5+6+18)=0.11
+```

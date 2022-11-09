@@ -1,0 +1,120 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+10. We have seen that as the number of features used in a model increases, the training error will necessarily decrease, but the test error may not. We will now explore this in a simulated data set.
+
+(a) Generate a data set with p =20features, n =1,000 observations, and an associated quantitative response vector generated according to the model
+Y = Xβ + , where β has some elements that are exactly equal to zero.
+```{r}
+set.seed(1)
+p=20
+n=1000
+x=matrix(rnorm(n*p),n,p)
+head(x)
+b=sample(0:10,20,replace = T)
+b[5]=0
+b[10]=0
+b[15]=0
+b[20]=0
+b
+e=rnorm(n)
+y=x%*%b+e # %*% does matrix multiplication
+y
+```
+(b) Split your data set into a training set containing 100 observations and a test set containing 900 observations.
+```{r}
+df=data.frame(x,y)
+train=sample(1:1000,100)
+test=-train
+x.training=df[train,]
+y.test=y[test]
+```
+(c) Perform best subset selection on the training set, and plot the training set MSE associated with the best model of each size.
+```{R}
+library(leaps)
+best.subset=regsubsets(y~., df,subset=train, nvmax=20)
+best.subset.summary=summary(best.subset)
+best.subset.mse=best.subset.summary$rss/length(train)
+plot(best.subset.mse,type="b")
+```
+(d) Plot the test set MSE associated with the best model of each size.
+```{r}
+best.test.mes=rep(NA,20)
+test.mat=model.matrix(y~., data=df[-train,])
+for (i in 1:20) {
+    coefi = coef(best.subset, id = i)
+    pred = test.mat[, names(coefi)] %*% coefi
+    best.test.mes[i] = mean((df$y[-train] - pred)^2)
+}
+best.test.mes
+which.min(best.test.mes)
+best.test.mes[14] #test mse=1.230335
+#plot test mse
+plot(sqrt(best.test.mes), ylab="root MSE", pch=19, type = "b")
+plot(sqrt(best.subset$rss), col = "blue", pch = 19, type = "b")
+legend("topright", legend = c("Training", "Validation"), col = c("blue", "black"), 
+    pch = 19)
+```
+
+(e) For which model size does the test set MSE take on its minimum value? Comment on your results. If it takes on its minimum value for a model containing only an intercept or a model containing all of the features, then play around with the way that you are generating the data in (a) until you come up with a scenario in which the test set MSE is minimized for an intermediate model size.
+```{R}
+which.min(best.test.mes)
+coef(best.subset,14)
+b
+
+```
+(f) How does the model at which the test set MSE is minimized compare to the true model used to generate the data? Comment on the coefficient values.
+```{R}
+coef(best.subset,14)
+b
+```
+(g) Create a plot displaying of r,where ˆβr
+'p j=1(βj − ˆβr j )2 for a range of values j is the jth coefficient estimate for the best model
+containing r coefficients. Comment on what you observe. How does this compare to the test MSE plot from (d)?
+```{R}
+B = as.data.frame(t(b))
+names(B) = paste0('X', 1:(ncol(B)))
+coef.err=rep(NA,20)
+for (i in 1:20){
+  a=coef(best.subset,i)
+  coef.err[i]=sqrt(sum(a[-1]-B[names(a)[-1]])^2)
+}
+coef.err
+plot(1:20,coef.err,type="b")
+```
+
+(k) cross-validation
+```{R}
+k=10
+set.seed(5)
+folds=sample(1:k,nrow(df), replace=TRUE)
+cv.errors =matrix (NA,k,20, dimnames =list(NULL , paste(1:20) ))
+predict.regsubsets= function(object,newdata,id,...){
+  form = as.formula(object$call[[2]])
+  test.mat=model.matrix(form,newdata)
+  coefi=coef(object,id=id)
+  test.mat[,names(coefi)]%*%coefi
+}
+for (j in 1:k){
+  best.fit=regsubsets(y~.,data = df[folds!=j,], nvmax = 20)
+  for (i in 1:20){
+    pred=predict(best.subset, df[folds==j,], id=i)
+    cv.errors[j,i]=mean((df$y[folds==j]-pred)^2)}
+}
+cv.errors
+mean.cv.errors=apply(cv.errors,2,mean)
+which.min(mean.cv.errors)
+mean.cv.errors[14]  #test mse=1.1927 
+plot(mean.cv.errors, pch = 19, type = "b")
+reg.best=regsubsets(y~., data=df, nvmax=20)
+cv.coef=coef(reg.best,14)
+coef(best.subset,14)
+cv.coef
+b
+```

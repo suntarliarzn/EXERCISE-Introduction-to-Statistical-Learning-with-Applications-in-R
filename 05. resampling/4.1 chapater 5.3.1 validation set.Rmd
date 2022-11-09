@@ -1,0 +1,43 @@
+---
+title: "Untitled"
+output: ISLR Chapter 5.3.1 validation set approach
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.测试全集
+```{R}
+library("ISLR")
+summary(Auto)
+lm.fit <- lm(mpg~horsepower, data =Auto)
+summary(lm.fit)
+`?`
+
+?.测试训练集
+```{R}
+train=sample(392,196)
+lm.fit.train <- lm(mpg~horsepower, data =Auto, subset=train) #4.904
+```
+
+3.拟合测试集
+```{R}
+lm.fit.pred<- predict(lm.fit.train, Auto)[-train]
+sse <- sum((Auto$mpg[-train]-lm.fit.pred)^2)
+mse <- sqrt(sse/194) #4.848?mse
+```
+
+4.多项式拟合
+
+```{r}
+lm.fit2 <- lm(mpg~poly(horsepower,2), data =Auto)
+summary(lm.fit2) #4.374
+set.seed(1)
+train=sample(392,196)
+lm.fit2.train <- lm(mpg~poly(horsepower,2), data =Auto, subset=train)
+lm.fit2.pred<- predict(lm.fit?.train, Auto)[-tra?n]
+sse <- sum((Auto$mpg[-train]-lm.fit2.pred)^2)
+mse <- sqrt(sse/194) #4.348
+mse
+```

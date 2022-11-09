@@ -1,0 +1,71 @@
+---
+title: "8.3.1 Fitting Classification Trees"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. load the dataset
+```{R}
+# install.packages("tree")
+library(ISLR)
+library(tree)
+attach(Carseats)
+head(Carseats)
+summary(Carseats)
+```
+# 2.create classification of Sales
+```{R}
+High=ifelse(Sales<8, "No", "Yes")
+Carseats_New=data.frame(Carseats,High)
+```
+
+# 3. decision tree
+```{R}
+tree.carseats= tree(High~.-Sales, Carseats_New)
+tree.carseats
+summary(tree.carseats)
+plot(tree.carseats)
+text(tree.carseats, cex=0.8)
+```
+
+# 4. decision tree for predictoin
+```{R}
+set.seed(2)
+train=sample(1:nrow(Carseats), 200)
+Carseats_New.test=Carseats_New[-train,]
+High.test=High[-train]
+Carseats_New.train=tree(High~.-Sales, Carseats_New, subset=train)
+Carseats_New.pred=predict(Carseats_New.train,Carseats_New.test, type="class")
+table(Carseats_New.pred,High.test)
+#prediction rate=(104+50)/200=0.77
+```
+
+# 5. cv decision tree
+```{R}
+set.seed(2)
+cv.carseats =cv.tree(Carseats_New.train,FUN=prune.misclass ) 
+#We use the argument FUN=prune.misclass in order to indicate that we want the classification error rate to guide the cross-validation and pruning process, rather than the default for the cv.tree() function, which is deviance.
+cv.carseats
+# The cv.tree() function reports the number of terminal nodes of each tree considered (size) as well as the corresponding error rate and the value of the cost-complexity parameter used (k, which corresponds to lamda in (8.4)).
+
+plot(cv.carseats$size ,cv.carseats$dev ,type="b")
+# best tree size =5
+```
+
+# 6. prune the tree with best tree size
+```{R}
+prune.carseats =prune.misclass (tree.carseats ,best=5)
+plot(prune.carseats )
+text(prune.carseats ,pretty =0)
+# pretty=0 instructs R to include the category names for any qualitative predictors
+```
+
+# 7. prediction rate with vest tree size
+```{R}
+tree.pred=predict (prune.carseats ,Carseats_New.test,type="class")
+table(tree.pred,High.test)
+#prediction rate=(99+65)/200=0.82 better than the full tree
+```

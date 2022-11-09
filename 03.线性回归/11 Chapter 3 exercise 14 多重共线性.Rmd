@@ -1,0 +1,71 @@
+---
+title: "13.chapter 3 exercise 14 éŽ³â€³æ€€ç€<9a><9f>???éŽ<af><88>"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+14. This problem focuses on the collinearity problem.
+(a) Perform the following commands in R: > s?t .seed(1) > x1=runif (100) > x2=0.5*x1+rnorm (100) /10 > y=2+2* x1+0.3*x2+r?orm (100)
+The last line corresponds to creating a?linear model in which y is a function of x1 and x2. Write out the form of the linear model. What are the regression coefficients??```{R}
+set.seed(1)
+x1=runif(100)
+hist(x1)
+x2=0.5*x1+rnorm(100)/10
+x2
+hist(x2?
+y=2+2*x1+0.3*x2+rnorm(100)
+fit <- lm(y~x1+x2)
+su?mary(fit)
+```
+y=2.13+1.44*x1+x2
+
+
+(b) What is the correlation between x1 and x2? Create a scatterplot displaying the relationship?between the variables.
+```{R}
+cor(x1,x2)
+plot(x1,x2)
+```
+cor=0.835, linear relationship
+
+(c) Using this data, fit a least square? regression to predict y using x1 and x2. Describ? the results obtained. What are ??ƒÀ0,
+ƒÀ??1,and
+ƒÀ??2? How do these relate t? the true ƒÀ0, ƒÀ1,and ƒÀ2?Can you reject the null hypothesis H0 : ƒÀ1 = 0? How about the null hypothesis H0 : ƒÀ2 =0?
+reject $\beta$1, not reject $\beta$2
+
+?d) Now fit a least squares regression to predict y using only x1. Comment on your results. Can you?reject the ?ull hypothesis H0 : ƒÀ1 =0?
+```{R}
+fit1 <- lm(y~x1)
+fit2 <- lm(y~x2)
+```
+$\beta$1=1.97, reject null
+$\beta$2=2.90, reject null
+
+(e) Now fit a least squares regression to predict y using only x2. Comm?nt on your results. Can you reject the null ?ypothesis H0 : ƒÀ1 =0?
+(f) Do the results obtained in (c)???(e) contradict each other? Explain your answer.
+(g) Now suppose we obtain one additional observation, which was unfortunately mismeasured. > x1=c(x1 ,?0.1) > x2=c(x2 , 0.8) > y=c(y,6)
+Re-fit the l?near models from (c) to (e) using this new data. What effec? does this new observation have on the each of the models? In each model, is this observation an outlier? A high-leverage point? Both? Explain your an?wers.
+reject $\beta$2, not reject$\beta$1
+y~x?:reject null
+y~x2:reject null
+y~x1+x2: no outlier,high-leverage:101
+y~x1: outlier 101
+y~x2: no outlier, high-leverage:101
+```R
+x1=c(x1,0.1)
+x2=c(x2,0.8)
+y=c(y,6)
+fit3 <- lm(y~x1+x2)
+summary(fit3)
+fit4 <- lm(y~x1)
+summary(?it4)
+fit5 <- lm(y~x2)
+summary(fit5?
+plot(fit3)
+plot(fit4)
+plot(fit5)
+rstudent(fit3)[which(rstudent(fit3)>3)]
+rstudent(fit4)[which(rstudent(fit4)>3)]
+r?tudent(fit5)[which(rstudent(fit5)>3)]
+```

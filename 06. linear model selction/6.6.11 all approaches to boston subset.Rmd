@@ -1,0 +1,149 @@
+---
+title: "6.6.11 exercise 11"
+output:
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+We will now try to predict per capita crime rate in the Boston data set.
+(a) Try out some of the regression methods explored in this chapter, such as best subset selection, the lasso, ridge regression, and PCR. Present and discuss results for the approaches that you consider.
+1.处理数据
+```{R ISLR}
+set.seed(121)
+library(ISLR)
+library(MASS)
+head(Boston)
+summary(Boston)
+dim(Boston)
+train=sample(1:nrow(Boston),nrow(Boston)*0.8)
+test=-train
+boston.train=Boston[train,]
+cri.test=Boston$crim[test]
+```
+
+2. best subset selection
+```{R}
+set.seed(1)
+library(leaps)
+predict.regsubsets= function(object,newdata,id,...){
+  form = as.formula(object$call[[2]])
+  test.mat=model.matrix(form,newdata)
+  coefi=coef(object,id=id)
+  test.mat[,names(coefi)]%*%coefi
+}
+k=10
+best.subset.errors =matrix (NA,k,13, dimnames =list(NULL , paste(1:13) ))
+folds=sample(1:k,nrow(boston.train),replace=T)
+
+for (i in 1:k){
+  best.subset=regsubsets(crim~., data=boston.train[folds!=i,], nvmax=13)
+  for (j in 1:13){
+    best.subset.pred=predict(best.subset,boston.train[folds==i,], id=j)
+    best.subset.errors[i,j]=mean((boston.train$crim[folds==i]-best.subset.pred)^2)
+  }
+}
+best.subset.errors
+mean.best.subset.errors=apply(best.subset.errors,2,mean)
+which.min(mean.best.subset.errors)
+best.subset.mse=mean.best.subset.errors[12] #mse=43.50
+best.subset.mse
+plot(mean.best.subset.errors, pch = 19, type = "b")
+coef(best.subset,12)
+best.subset.pred=predict(best.subset,Boston[test,], id=12)
+#---------------------
+# m=12
+# best.subset.mse=42.46014
+#   (Intercept)            zn         indus          chas           nox            rm           dis 
+#  17.497941702   0.044484580  -0.049548682  -0.650910395 -10.423803332   0.516804230  -0.986325634 
+#           rad           tax       ptratio         black         lstat          medv 
+#   0.579541936  -0.003483666  -0.247412156  -0.010275383   0.105147589  -0.206770151 
+#-----------------------
+```
+
+3.ridge regression
+```{R}
+library(glmnet)
+x=model.matrix(crim~.,Boston)[,-1]
+y=Boston$crim
+y.test=y[test]
+ridge.cv=cv.glmnet(x[train,],y[train], alpha =0)
+plot(ridge.cv)
+ridge.best.lambda=ridge.cv$lambda.min
+ridge.mod=glmnet(x[train,],y[train], alpha=0)
+plot(ridge.cv)
+ridge.pred=predict(ridge.mod,newx=x[test,],s=ridge.best.lambda)
+ridge.mse=mean((ridge.pred-y.test)^2)
+ridge.mse #35.784
+coef(ridge.cv)[1:13,]
+#------------------
+# m=13
+# ridge.mse=16.74
+# (Intercept)           zn        indus         chas          nox           rm          age 
+# 13.611907278  0.036768943 -0.076738936 -0.277466933 -6.877273022  0.303179353  0.001688621 
+#         dis          rad          tax      ptratio        black        lstat 
+# -0.875991287  0.446777828  0.002425254 -0.177292650 -0.010992228  0.102658502 
+#------------------
+```
+
+4. lasso
+```{R}
+library(glmnet)
+x=model.matrix(crim~.,Boston)[,-1]
+y=Boston$crim
+y.test=y[test]
+lasso.cv=cv.glmnet(x[train,],y[train], alpha =1)
+plot(lasso.cv)
+lasso.best.lambda=lasso.cv$lambda.min
+lasso.mod=glmnet(x[train,],y[train], alpha =1)
+lasso.pred=predict(lasso.cv,x[test,],s=lasso.best.lambda)
+lasso.mse=mean((lasso.pred-y.test)^2)
+lasso.mse #35.44
+plot(lasso.mod)
+coef(lasso.cv)
+#------------------
+# m=11
+# lasso.mse=35.39
+#------------------
+```
+
+5.pcr
+```{R}
+library(pls)
+pcr.fit=pcr(crim~., data=Boston[train,], scale=TRUE, validation="CV")
+summary(pcr.fit)
+validationplot(pcr.fit)
+validationplot(pcr.fit,val.type="MSEP")
+pcr.pred=predict(pcr.fit,Boston[test,],ncomp=8)
+pcr.test.mse=mean((pcr.pred-y.test)^2) 
+pcr.test.mse #37.89
+coef(pcr.fit, ncomp=8)
+#------------------
+# n=8
+# pcr.test.mse=17.22
+#------------------
+```
+
+6.compare the four approaches
+```{R}
+mse=c(best.subset.mse, ridge.mse,lasso.mse,pcr.test.mse)
+barplot(mse,xlab="Models", ylab="test mse", names=c("best subset","ridge","lasso", "pcr"))
+
+test.avg = mean(y.test)
+best.subset.r=1-mean((best.subset.pred-y.test)^2)/mean((test.avg-y.test)^2)
+ridge.r=1-mean((ridge.pred-y.test)^2)/mean((test.avg-y.test)^2)
+lasso.r=1-mean((lasso.pred-y.test)^2)/mean((test.avg-y.test)^2)
+pcr.r=1-mean((pcr.pred-y.test)^2)/mean((test.avg-y.test)^2)
+barplot(c(best.subset.r, ridge.r, lasso.r, pcr.r), xlab = "Models", ylab="R2", names=c("best subset","ridge","lasso", "pcr") )
+```
+(b) Propose a model (or set of models) that seem to perform well on this data set, and justify your answer. Make sure that you are evaluating model performance using validation set error, crossvalidation, or some other reasonable alternative, as opposed to using training error.
+```{R}
+# best subset; ridge; lasso perform equally well. The best one is lasso
+```
+(c) Does your chosen model involve all of the features in the data set? Why or why not?
+```{R}
+# best subset m=12
+# ridge m=14
+# lasso m=1
+```

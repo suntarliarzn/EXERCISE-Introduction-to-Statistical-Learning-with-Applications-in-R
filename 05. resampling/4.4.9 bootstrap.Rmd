@@ -1,0 +1,64 @@
+---
+title: "4.4.9 bootstrap"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+9. We will now consider the Boston housing data set, from the MASS library.
+(a) Based on this data set, provide an estimate for th? population mean of medv. Call this estimate ??¦Ì.
+(b) Provide an estimate of the standard error of ??¦Ì. Interpret this result. Hint: We can compute the standard error of the sample mean by dividing the sample standard deviation by the square root of the number of observations.
+(c) Now estimate the standard error of ??¦Ì using the bootstrap. How does this compare to your answer from (b)?
+```{R}
+library(MASS)
+library(ISLR)
+library(boot)
+medv <- Boston$medv
+estimate.std.error <- sqrt(sum((medv-mean(medv))^2))/(length(medv)-1)
+estimate.std.error
+fn.mean <- function(data,in?ex){
+  x=data[index]
+  return(sum(x)/length(x))
+}
+boot(medv,fn.mean,R=1000)
+# mean=22.5328, std.error=0.4048
+```
+
+
+(d) Based on your bootstrap estimate from (c), provide a 95% confidence interval for the mean of medv. Compare it to the results obtained usi?g t.test(Boston$medv). Hint: You can approximate a 95% confidence interval using the formula [??¦Ì ??? 2SE(??¦Ì), ??¦Ì +2SE(??¦Ì)].
+```{R}
+mu.boot <- 22.53
+se.boot <- 0.42
+ci.boot <- data.frame(mu.boot-1.96*se.boot, mu.boot+1.96*se.boot)
+ci.boot
+# [21.7068,23.3532]
+t.test(medv)
+#[21.7295,23.3360]
+```
+(e) Based on this data set, provide an estimate, ??¦Ìmed, for the median value of medv in the population.
+(f) We now would like to estimate the standard error of ??¦Ìmed.Unfortunately, there is no simple formula for computing the standard error of the median. Instead, estimate the standard error of the median using the bootstrap. Comment on your findings.
+```{R}
+median(medv)
+#21.2
+fn.median <- function(data,index){
+ ?x=data[index]
+  return(median(x))
+}
+boot(medv,fn.median,R=1000)
+# 21.2 std.error=0.3725
+```
+
+(g) Based on this data set, provide an estimate for the tenth percentile of medv in Boston suburbs. Call this quantity ??¦Ì0.1.(You can use the quantile() function.)
+(h) Use the bootstrap to estimate the standard error of ??¦Ì0.1.Comment on your findings.
+```{R}
+quantile(medv,0.1)
+# 12.75
+fn.quantile.10 <- function(data,index){
+  x=data[index]
+  return(quantile(x,0.1))
+}
+boot(medv, fn.quantile.10, R=1000)
+# 12.75 std.error=0.4977
+```

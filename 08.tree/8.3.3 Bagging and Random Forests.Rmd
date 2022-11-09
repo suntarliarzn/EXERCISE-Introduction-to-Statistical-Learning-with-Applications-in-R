@@ -1,0 +1,50 @@
+---
+title: "8.3.3 Bagging and Random Forests"
+output: github_document
+---
+
+# 1. Preparation of the data
+```{R}
+library(tree)
+library(MASS)
+attach(Boston)
+set.seed(2)
+dim(Boston)
+train=sample(1:nrow(Boston),300)
+boston.train=Boston[train,]
+boston.test=Boston[-train,]
+medv.test=medv[-train]
+```
+
+# 2.Fit the Random Forest with training set
+```{R}
+# install.packages("randomForest")
+library(randomForest)
+rd.boston=randomForest(medv~.,data=Boston, subset=train)
+rd.boston
+summary(rd.boston)
+#msr are based on out of bag estimates
+plot(rd.boston)
+```
+
+# 3.select the best mtry by the training dataset
+```{r}
+oob.err=rep(NA,13)
+test.err=rep(NA,13)
+for (mtry in 1:13){
+  fit=randomForest(medv~., data=Boston, subset=train, mtry=mtry, mtree=400)
+  oob.err[mtry]=fit$mse[400]
+  pred=predict(fit,boston.test)
+  test.err[mtry]=mean((pred-medv.test)^2)
+}
+matplot(1:mtry,cbind(oob.err, test.err),pch=19,col=c("red","blue"),type="b", ylab="MSE")
+legend("topright", legend=c("OOB","Test"),pch=19, col=c("red","blue"))
+# mtry=5
+```
+
+# 4. importance of the variables
+```{R}
+rd.boston.best=randomForest(medv~.,data=Boston, subset=train, mtry=5, importance =TRUE)
+importance (rd.boston.best)
+varImpPlot (rd.boston.best)
+```

@@ -1,0 +1,36 @@
+---
+title: "10.9.4 Pretrained CNN Models"
+output: html_document
+---
+
+1.data preparation
+```{R}
+library(keras)
+library(tensorflow)
+img_dir <- "book_images"
+image_names <- list.files(img_dir)
+num_images <- length(image_names)
+```
+
+2.data processing
+```{R}
+x <- array(dim=c(num_images,224,224,3))
+for(i in 1:num_images){
+  img_path <- paste(img_dir, image_names[i], sep="/")
+  img <- image_load(img_path, target_size = c(224,224))
+  x[i,,,] <- image_to_array(img)
+}
+# image_array_save(x[1,,,],"train.jpg")
+x <- imagenet_preprocess_input(x)
+```
+
+3.model fitting
+```{R}
+model <- application_resnet50(weights="imagenet")
+summary(model)
+pred <- model %>% predict(x) %>% imagenet_decode_predictions(top=3)
+names(pred) <- image_names
+print(pred)
+
+```
+

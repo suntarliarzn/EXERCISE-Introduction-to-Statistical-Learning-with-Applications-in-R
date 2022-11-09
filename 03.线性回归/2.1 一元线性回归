@@ -1,0 +1,37 @@
+---
+title: "3.6 线性回归"
+output: html_document
+---
+
+1. 一元线性回归
+
+```R
+> library(MASS)
+> library(ISLR)
+> Boston
+> ?Boston
+> names(Boston)
+> fit <- lm(medv~lstat,data=Boston)
+> fit
+> summary(fit)
+> confint(fit)
+> fitted(fit)
+> predict(fit, data.frame(ls?at=c(0,1,5,10,15)))
+> predict(fit, data.frame(lstat=c(0,1,5,10,15)),interval = "prediction")
+> predict(fit, data.frame(lstat=c(0,1,5,10,15)),interval = "confidence")
+> plot(Boston$lstat,Boston$medv)
+> plot(Boston$lstat,Boston$medv,pch="+")
+> abline(fit,col?r="red")
+> abline(fit,col="blue", lwd=3)
+```
+
+2.线性回归检验
+```R
+>plot(fit)
+> plot(predict(fit),residuals(fit))
+> plot(predict(fit),rstudent(fit))
+> plot(predict(fit),residuals(fit))
+> plot(predict(fit),rstudent(fit))
+> plot(hatvalues(fit))
+> which.max(ha?values(fit))
+```

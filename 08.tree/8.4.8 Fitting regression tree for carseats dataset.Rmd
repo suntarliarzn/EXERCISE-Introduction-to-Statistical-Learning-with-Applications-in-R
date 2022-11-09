@@ -1,0 +1,82 @@
+
+---
+title: "8.4.8 Fitting regression tree for carseats dataset"
+output: github_document
+---
+
+# 1. load the dataset
+```{R}
+# install.packages("tree")
+library(caTools)
+library(ISLR)
+library(tree)
+attach(Carseats)
+head(Carseats)
+summary(Carseats)
+```
+
+# 2. split the data set into a training set and a test set
+```{R}
+set.seed(101)
+sample.data=sample.split(Carseats$Sales,SplitRatio = 2/3)
+car.train=subset(Carseats, sample.data=T)
+car.test=subset(Carseats, sample.data=F)
+```
+
+# 3. fit the regression tree
+```{R}
+tree.train= tree(Sales~., car.train)
+tree.train
+summary(tree.train)
+plot(tree.train)
+text(tree.train, cex=0.8)
+tree.test=predict(tree.train,car.test)
+mse=mean((tree.test-car.test$Sales)^2)
+# mse=2.755
+```
+
+# 3. cv for regression tree
+```{R}
+set.seed(101)
+cv.tree.train =cv.tree(tree.train) 
+plot(cv.tree.train$size ,cv.tree.train$dev ,type="b")
+```
+# 4. prune the tree
+```{R}
+prune.cv.tree = prune.tree(tree.train, best = 9)
+plot(prune.cv.tree)
+text(prune.cv.tree ,pretty =0)
+prune.tree.test=predict(prune.cv.tree,car.test)
+mse=mean((prune.tree.test-car.test$Sales)^2)
+# mse=3.53
+```
+
+# 5. bagging approach
+```{R}
+library(randomForest)
+rd.car.train=randomForest(Sales~.,data=car.train, mtry=10, importance =TRUE)
+rd.car.test=predict(rd.car.train, car.test)
+rd.mse=mean((rd.car.test-car.test$Sales)^2)
+importance (rd.car.train)
+varImpPlot (rd.car.train)
+# rd.mse=0.2996
+```
+
+# 6. random forest
+```{R}
+set.seed(101)
+test.err=rep(NA,13)
+for (mtry in 1:13){
+  rd.car.train=randomForest(Sales~.,data=car.train, mtry=mtry, importance =TRUE,  mtree=400)
+  rd.car.test=predict(rd.car.train, car.test)
+  test.err[mtry]=mean((rd.car.test-car.test$Sales)^2)
+}
+plot(1:mtry,test.err,pch=19,type="b", ylab="MSE")
+# best mtry=5
+rd.car.best=randomForest(Sales~.,data=car.train, mtry=5, importance =TRUE,  mtree=400)
+rd.car.test=predict(rd.car.train, car.test)
+test.best=mean((rd.car.test-car.test$Sales)^2)
+importance (rd.car.best)
+varImpPlot (rd.car.best)
+# test.best=0.3969
+```

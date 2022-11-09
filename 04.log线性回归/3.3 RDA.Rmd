@@ -1,0 +1,22 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+1.qdaƒ‚∫œ
+```{R}
+cor(Lag1,Lag2)
+cov(Lag1,Lag2)
+qda.fit=qda(Direction~Lag1+Lag2, data=Smarket, subset=train)
+qda.fit
+```
+
+2.qda‘§≤‚
+```{R}
+qda.pred <- predict(qda.fit, Smarket.2005)
+q?a.pred
+table(qda.p?ed$?lass,Smarket.2005$Direction)
+mean(qda.pred$class==Smarket.2005$Direction)
+```

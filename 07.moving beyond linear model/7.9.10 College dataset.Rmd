@@ -1,0 +1,63 @@
+---
+title: "7.9.10 College dataset"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.data expo
+```{R}
+library(ISLR)
+library(boot)
+library(gam)
+summary(College)
+head(College)
+attach(College)
+```
+
+2. training/test dataset
+```{R}
+set.seed(1)
+dim(College)
+train=sample(1:nrow(College), nrow(College)/2)
+test=(-train)
+test.dataset=College[test]
+```
+
+3.forward subset selection
+```{R}
+library(leaps)
+reg.forward=regsubsets(Outstate~.,data=College, nvmax=17, method="forward")
+reg.sum=summary(reg.forward)
+plot(reg.sum$rss)
+plot(reg.sum$cp)
+plot(reg.sum$bic)
+plot(reg.sum$adjr2)
+coef(reg.forward,6)
+```
+
+4.GAM with parameters
+```{R}
+library(gam)
+reg.gam=gam(Outstate~Private+ns(Room.Board,1)+ns(PhD,2)+ns(perc.alumni,3)+ns(Expend,4)+Grad.Rate, data=College, subset=train)
+plot.Gam(reg.gam, se=TRUE, col="red")
+reg.gam
+summary(reg.gam)
+```
+
+5.GAM model evaluation
+```{R}
+preds.1=predict(reg.gam, newdata=test.dataset)
+mse.1=mean((test.dataset$Outstate-preds.1)^2)
+mse.1
+
+gam.m2 = gam(Outstate~Private+s(Room.Board,4)+s(PhD,4)+s(perc.alumni,2)
++s(Expend,4), data=College, subset=train) # No Grad.Rate
+gam.m3 = gam(Outstate~Private+s(Room.Board,4)+s(PhD,4)+s(perc.alumni,2)
++s(Expend,4)+Grad.Rate, data=College, subset=train) # Linear Grad rate
+gam.m4 = gam(Outstate~Private+s(Room.Board,4)+s(PhD,4)+s(perc.alumni,2)
++s(Expend,4)+s(Grad.Rate,4), data=College, subset=train) # Spline with 4 degrees
+anova(gam.m2,gam.m3,gam.m4, test="F")
+```

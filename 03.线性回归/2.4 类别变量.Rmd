@@ -1,0 +1,27 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1.类别变量
+
+```R
+library(MASS)
+library(ISLR)
+Carseats
+names(Carseats)
+fit <- lm(Sales~.,data=Carseats)
+summary(fit)
+```
+
+2.类别数值
+```R
+contrasts(Carseats$ShelveLoc)
+contrasts(Carseats$US)
+```
+
+3.绘制散点???
+```R
+pairs(Carseats$Sales~Carseats$Urban)
+
+```

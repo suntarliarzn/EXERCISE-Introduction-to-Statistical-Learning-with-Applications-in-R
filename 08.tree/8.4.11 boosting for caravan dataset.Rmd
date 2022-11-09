@@ -1,0 +1,68 @@
+---
+title: "8.4.11 boosting for caravan dataset"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. data prepartion
+```{R}
+library(ISLR)
+library(gbm)
+?Caravan
+head(Caravan)
+str(Caravan)
+attach(Caravan)
+Caravan$purchase=ifelse(Caravan$Purchase=="Yes",1,0)
+caravan=Caravan[,-86]
+```
+
+# 2. training dataset
+```{R}
+train=caravan[1:1000,]
+test=caravan[-c(1:1000),]
+test.purchase=test$purchase
+```
+
+# 3.boosting for fitting
+```{R}
+library(gbm)
+set.seed(101)
+boost.train=gbm(purchase~., data=train, distribution = "bernoulli", n.trees = 1000, shrinkage = 0.01) #distribution for classification is bernoulli
+boost.train
+summary(boost.train)
+# PPERSAUT
+```
+
+# 4.prediction for test
+```{R}
+pred.test=predict(boost.train, newdata=test, type="response")
+pred.purchase=ifelse(pred.test>0.2,1,0)
+table(pred.purchase,test.purchase)
+#              test.purchase
+# pred.purchase    0    1
+#             0 4410  256
+#             1  123   33
+# 33/(123+33)
+```
+
+# 5.knn
+```{R}
+library(class)
+standardized.X= scale(Caravan [,-86])
+train=1:1000
+train.X= standardized.X[train,]
+test.X= standardized.X[-train,]
+train.Y=Purchase[train]
+test.Y=Purchase [-train]
+set.seed(1)
+knn.pred=knn(train.X,test.X,train.Y,k=5)
+table(knn.pred, test.Y)
+#        test.Y
+# knn.pred   No  Yes
+#      No  4529  159
+#      Yes    4  130
+# 130/(130+4)
+```

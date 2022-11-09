@@ -1,0 +1,60 @@
+---
+title: "9.6.6 cost margin"
+output: github_document
+---
+
+# 1. data preparation
+```{R}
+library(e1071)
+set.seed(101)
+x=matrix(rnorm(1000*2), ncol=2)
+x[1:700,]=x[1:700,]+4
+y=c(rep(1,700), rep(2,300))
+dat=data.frame(x=x,y=as.factor(y))
+plot(x, col=y+1, pch=19)
+```
+
+# 2.svc with diffrent costs
+```{R}
+svm.1=svm(y~., data=dat, kernel="linear", cost=0.001)
+svm.1
+plot(svm.1,dat)
+pred.1=predict(svm.1, dat)
+table(pred.1, dat$y)
+svm.2=svm(y~., data=dat, kernel="linear", cost=100)
+svm.2
+plot(svm.2,dat)
+pred.2=predict(svm.2, dat)
+table(pred.2, dat$y)
+# cost higher prediction more accurate on training dataset
+```
+
+# 3. svc with cv
+```{R}
+tune.out=tune(svm, y~., data=dat, kernel="linear", ranges=list(cost=seq(0.01:100)))
+tune.out$best.model
+plot(tune.out$best.model, dat)
+pred.tune=predict(tune.out$best.model, dat)
+table(pred.tune, dat$y)
+```
+
+# 4. test dataset
+```{R}
+set.seed(101)
+test.x=matrix(rnorm(1000*2), ncol=2)
+test.x[1:700,]=test.x[1:700,]+3
+test.y=c(rep(1,700), rep(2,300))
+test.dat=data.frame(x=test.x,y=as.factor(test.y))
+plot(test.x, col=test.y+1, pch=19)
+```
+
+# 5. svc with diffrent costs on test dataset
+```{R}
+test.1=predict(svm.1, test.dat)
+table(test.1, test.dat$y)
+test.2=predict(svm.2, test.dat)
+table(test.2, test.dat$y)
+test.cv=predict(tune.out$best.model, test.dat)
+table(test.cv, test.dat$y)
+# cost lower, the margin wider, more accurate on test datset
+```

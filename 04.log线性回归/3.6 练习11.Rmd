@@ -1,0 +1,75 @@
+---
+title: "3.6 Á·Ï°11"
+output: html_document
+---
+
+(1) Create a binary variable, mpg01, that contains a 1 if mpg contains a value above its median, and a 0 if mpg contains a value below its median. You can compute the median using the median() function. No?e you may find it helpful to use the data.frame() function to create a single data set containing both mpg01 and the other Auto variables.
+
+```{R}
+library(ISLR)
+?Auto
+summary(Auto)
+head(Auto)
+attach(Auto)
+mpg01 <- ifelse(mpg>22.75, 1,0)
+head(mpg01)
+car_dat? <- data.frame(mpg01,cylinders, displacement, horsepower, weight, acceleration, year, origin)
+cor(car_data)
+plot(car_data)
+```
+
+2.Explore the data graphically in order to investigate the association between mpg01 and the other features. Which of the other ?eatures seem most likely to be useful in predicting mpg01?Scatterplots and boxplots may be useful tools to answer this question. Describe your findings.
+
+cylinders,displacement,weight
+
+3.Split the data into a training set and a test set.
+```{R}
+train_data ?- subset(car_data, year<80)
+test_data <- subset(car_data, year>=80)
+test_mpg01 <- mpg01[which(year>=80)]
+```
+
+4.Perform LDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test e?ror of the model obtained?
+```{R}
+library(MASS)
+lda.fit <- lda(mpg01~cylinders+displacement+weight,train_data, family=binomial )
+lda.fit
+lda.pred <- predict(lda.fit, test_data, type="response")
+lda_mpg01 <- data.frame(lda.pred)
+table(t=test_mpg01,lda=lda_m?g01$class)
+mean(test_mpg01==lda_mpg01$class)
+# 0.82
+```
+
+5.Perform QDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{R}
+qda.fit <- qda(mpg?1~cylinders+displacement+weight,train_data, family=binomial)
+qda.pred <- predict(qda.fit, test_data, type="response")
+qda_mpg01 <- data.frame(qda.pred)
+table(t=test_mpg01,qda=qda_mpg01$class)
+mean(test_mpg01==qda_mpg01$class)
+# 0.88
+```
+
+6. Perform logisti? regression on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{R}
+glm.fit <- glm(mpg01~cylinders*displacement*weight, train_data, family=binomi?l)
+glm.pred <- predict(glm.fit, test_data, type="response")
+ifelse(glm.pred>0.5, 1,0)
+glm.ifelse<- ifelse(glm.pred>0.5, 1,0)
+table(test_mpg01,glm.ifelse)
+mean(test_mpg01==glm.ifelse)
+#0.8
+```
+
+7. Perform KNN on the training data, with several values of K,i? order to predict mpg01. Use only the variables that seemed most associated with mpg01 in (b). What test errors do you obtain? Which value of K seems to perform the best on this data set?
+
+```{R}
+library(class)
+# k=1
+train_mpg01 <- mpg01[which(year<80)]
+kn?_1 <- knn(train_data,test_data,train_mpg01,k=1)
+table(knn_1,test_mpg01)
+mean(knn_1==test_mpg01)
+#0.8
+```

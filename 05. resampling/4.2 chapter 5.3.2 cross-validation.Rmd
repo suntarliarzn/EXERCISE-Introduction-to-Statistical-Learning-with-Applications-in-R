@@ -1,0 +1,32 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+1.线性拟合LOOCV
+```{R}
+lm.fit <- lm(mpg~horsepower, data=Auto)
+summary(lm.fit) #rse=4.906
+library(ISLR)
+glm.fit <- glm(mpg~horsepower,data?Auto)
+# glm.fit1 <- glm(Auto$mpg~Auto$horsepower) 这种写法重新构建了数据集，丢失原有数据集信息。
+library(boot)
+cv.err <- cv.glm(Auto, glm.fit)
+cv.err$delta #rse=4.9225
+```
+
+2. K-fold CV
+```{R}
+cv.err <- function(i){
+    while (i <= 10){
+        glm.fit = g?m(mpg~poly(horsepower,i), data=Auto);
+        cv=cv.glm(Auto,glm.fit, K=10);
+        cv.err.10[i]=cv$delta[1];
+        i=i+1;
+        }
+    return(sqrt(cv.err.10))}
+
+```

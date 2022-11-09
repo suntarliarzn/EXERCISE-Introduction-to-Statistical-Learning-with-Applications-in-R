@@ -1,0 +1,70 @@
+---
+title: "PCR&PLS"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1.数据预处理
+```{R ISLR}
+library(ISLR)
+set.seed(1)
+hitters=na.omit(Hitters)
+x=model.matrix(Salary~.,hitters)[,-1]
+y=hitters$Salary
+train=sample(1:nrow(x), nrow(x)/2)
+test=(-train)
+y.test=y[test]
+```
+
+2.PCR regression
+```{R pls}
+library(pls)
+set.seed(2)
+pcr.fit=pcr(Salary~., data=hitters, scale=TRUE, validation="CV")
+summary(pcr.fit)
+validationplot(pcr.fit)
+validationplot(pcr.fit,val.type="MSEP")
+```
+
+3.PCA
+```{R psych}
+# PCA
+library(psych)
+x=model.matrix(Salary~.,hitters)[,-1]
+fa.parallel(x,fa="pc")
+principal(r=x, nfactors =6)
+```
+
+4.PCR validation
+```{R}
+pcr.pred=predict(pcr.fit,x,ncomp=1)
+mean((pcr.pred-y)^2)
+pcr.fit=pcr(y~x,scale=TRUE,ncomp=1)
+summary(pcr.fit)
+summary(pcr(Salary~., data=hitters, scale=TRUE, ncomp=6))
+```
+
+5.pls regression
+```{R}
+pls.fit=plsr(Salary~., data=hitters, scale=T, validation="CV")
+# pls
+summary(pls.fit)
+#pcr
+summary(pcr.fit)
+validationplot(pls.fit,val.type="MSEP")
+```
+
+6.pls validation
+```{R}
+pls.pred=predict(pls.fit,x,ncomp=2)
+mean((pls.pred-y)^2)
+pls.fit=plsr(y~x,scale=TRUE,ncomp=2)
+summary(pls.fit)
+pls.fit=plsr(y~x,scale=TRUE,ncomp=11)
+summary(pls.fit)
+pls.fit$coefficients
+```

@@ -1,0 +1,90 @@
+---
+title: "9.6.8 OJ dataset"
+output: github_document
+---
+
+# 1. data preparation
+```{R}
+library(ISLR)
+library(e1071)
+set.seed(101)
+str(OJ)
+head(OJ)
+dim(OJ)
+train=sample(1070,800)
+oj.train=OJ[train,]
+oj.test=OJ[-train,]
+```
+
+# 2.svc
+```{R}
+oj.svc=svm(Purchase~.,oj.train, kernel="linear", cost=0.01, scale=T)
+summary(oj.svc)
+pred.train=predict(oj.svc, oj.train)
+pred.test=predict(oj.svc, oj.test)
+table(pred.train, oj.train$Purchase)
+# (76+58)/800=0.168
+table(pred.test, oj.test$Purchase)
+# (10+37)/(10+37+144+79)=0.174
+```
+
+# 3.tune
+```{R}
+set.seed(101)
+tune.out=tune(svm, Purchase~.,data=oj.train, kernel="linear", ranges=list(cost=seq(0.01:10)), scale=T)
+tune.out$best.model
+tune.out$best.performance
+# best cost=1
+tune.pred=predict(tune.out$best.model, oj.train)
+tune.pred.test=predict(tune.out$best.model, oj.test)
+table(tune.pred, oj.train$Purchase)
+# (55+72)/800=0.159
+table(tune.pred.test, oj.test$Purchase)
+# (11+37)/(11+37+143+79)=0.178
+```
+
+# 4.radial
+```{R}
+set.seed(101)
+oj.svm=svm(Purchase~.,oj.train, kernel="radial", cost=0.01, scale=T)
+summary(oj.svm)
+pred.train=predict(oj.svm, oj.train)
+pred.test=predict(oj.svm, oj.test)
+table(pred.train, oj.train$Purchase)
+# 301/800=0.376
+table(pred.test, oj.test$Purchase)
+# 166/270=0.615
+tune.out=tune(svm, Purchase~.,data=oj.train, kernel="radial", ranges=list(cost=seq(0.01:10)), scale=T)
+tune.out$best.model
+tune.out$best.performance
+# best cost=1
+tune.pred=predict(tune.out$best.model, oj.train)
+tune.pred.test=predict(tune.out$best.model, oj.test)
+table(tune.pred, oj.train$Purchase)
+# (78+42/800=0.15
+table(tune.pred.test, oj.test$Purchase)
+# (12+37)/270=0.18
+```
+
+# 5.polynomial
+```{R}
+set.seed(101)
+oj.svm=svm(Purchase~.,oj.train, kernel="polynomial", cost=0.01, degree=2, scale=T)
+summary(oj.svm)
+pred.train=predict(oj.svm, oj.train)
+pred.test=predict(oj.svm, oj.test)
+table(pred.train, oj.train$Purchase)
+# 284/800=0.355
+table(pred.test, oj.test$Purchase)
+# 111/270=0.411
+tune.out=tune(svm, Purchase~.,data=oj.train, kernel="polynomial", ranges=list(cost=seq(0.01:10)), degree=2, scale=T)
+tune.out$best.model
+tune.out$best.performance
+# best cost=6
+tune.pred=predict(tune.out$best.model, oj.train)
+tune.pred.test=predict(tune.out$best.model, oj.test)
+table(tune.pred, oj.train$Purchase)
+# (84+42)/800=0.1575
+table(tune.pred.test, oj.test$Purchase)
+# (41+10)/270=0.189
+```

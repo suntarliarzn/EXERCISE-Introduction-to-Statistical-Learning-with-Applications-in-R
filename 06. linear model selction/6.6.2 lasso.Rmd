@@ -1,0 +1,60 @@
+---
+title: "6.6.2 lasso"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.数据预处理
+```{R ISLR}
+library(ISLR)
+set.seed(1)
+hitters=na.omit(Hitters)
+x=model.matrix(Salary~.,hitters)[,-1]
+y=hitters$Salary
+```
+
+2.构建训练集
+```{R}
+train=sample(1:nrow(x), nrow(x)/2)
+test=(-train)
+y.test=y[test]
+```
+
+3.lasso regression
+```{R glmnet}
+library(glmnet)
+lasso.mod=glmnet(x[train,],y[train], alpha = 1)
+plot(lasso.mod, xvar = "lambda", label = TRUE)
+```
+
+4.lasso regression cross validation
+```{R}
+set.seed(1)
+cv.lasso=cv.glmnet(x,y, alpha=1)
+plot(cv.lasso)
+lasso.coef=coef(cv.lasso)
+lasso.coef[lasso.coef!=0]
+
+
+
+bestlamda=cv.lasso$lambda.min #bestlamda=2.22
+cv.out=cv.glmnet(x[train,],y[train], alpha=1)
+plot(cv.out)
+bestlamda.out=cv.out$lambda.min #bestlamda.out=7.71
+
+lasso.pred=predict(lasso.mod, s=bestlamda,newx=x)
+mean((lasso.pred-y)^2)
+
+lasso.pred=predict(lasso.mod, s=bestlamda.out,newx=x[test,])
+mean((lasso.pred-y.test)^2)
+```
+
+4.best model selection
+```{R}
+lasso.coef=predict(cv.lasso, type="coefficients", s=bestlamda)[1:20,]
+lasso.coef #full model
+coef(cv.lasso) # simplest model within one std
+```

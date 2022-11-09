@@ -1,0 +1,59 @@
+---
+title: "chapter 4 tutor 1 Logistic Regression"
+output:
+  pdf_document: default
+  html_document: default
+---
+1.Smarekt数据�?
+```R
+library(ISLR)
+head(Smarket)
+?Smarket
+summary(Smarket)
+cor(Smarket[,-9])
+attach(Smarket)
+plot(Volume)
+xtabs(Volume~Year)
+?``
+
+2.指数回归
+```R
+glm.fits=gl?(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume,data=Smarket, family=binomial)
+summary(glm.fits)
+glm.probs=predict(glm.fits,type = "response")
+glm.probs[1:10]
+```
+
+3.比较指数回归分组结果
+```R
+?contrasts(Direction)
+g?m?pred=ifel?e(glm.probs>0.5,"Up","Do?n")
+table(glm.pred,Direction)
+(507+145)/1250
+mean(glm.pred==Direction)
+``?
+
+4.training data&error
+```R
+train=(Year<2005)
+newdata <- Smarket[!train,]
+Direction.2005 <- Direction[!train]
+glm.fit.tra?n <- glm(Direction~Lag?+?ag2+Lag3+?ag4+Lag5+Volume, data=Sm?rket, family=binomial, subset=train)
+summary(glm.fit.train)
+glm.probs.new?<- predict(glm.fit.train,newdata,type="response")
+glm.pred <- ifelse(glm.probs.new>0.5,"Up", "Down")
+table(glm.pred,Direct?on.2005)
+error.rate <-?m?an(glm.pr?d==Direction.2005)
+error?rate
+
+```
+5. refined model
+```R
+glm.fit12 <- glm(Direction~Lag1+Lag2,data?Smarket,family=binomial, subset = train)
+glm.fit12.pred <- predict(glm.fit12,newdata,type="response")
+glm.fit12.prob <- if?lse(glm.fit12.pred>0.5?"?p","Down"?
+glm.fit12.prob
+table(gl?.fit12.prob,Direction.2005)
+mean(glm.fit12.prob==Direction.2005)
+predict?glm.fit12, newdata=data.frame(Lag1=c(0,1.2,1.5,2),Lag2=c(0,1.1,-0.8,-2)), type="response")
+```

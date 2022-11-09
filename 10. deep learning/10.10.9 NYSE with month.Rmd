@@ -1,0 +1,54 @@
+---
+title: "10.10.9 NYSE with month"
+output: github_document
+---
+
+# 1.data preparation
+```{R}
+library(ISLR2)
+library(keras)
+library(tensorflow)
+x.data <- data.matrix(
+  NYSE[,c("DJ_return","log_volume","log_volatility")]
+)
+y <- NYSE[,"train"]
+x <- scale(x.data)
+```
+
+# 2.data processing
+```{R}
+# 构造一个用前五天成交数据来预测当天成交量的数据集
+lagm <- function(x,k=1){
+  n <- nrow(x)
+  pad <- matrix(NA, k,ncol(x))
+  rbind(pad, x[1:(n-k),])
+  }
+arframe <- data.frame(log_volume = x[, "log_volume"], L1 = lagm(x , 1), L2 = lagm(x, 2), L3 = lagm(x , 3), L4 = lagm(x , 4), L5 = lagm(x , 5)
+)
+arframe <- arframe[-(1:5),]
+y <- y[-(1:5)]
+```
+
+# 3.lm with MONTH
+```{R}
+
+# install.packages("stringr") 正则表达式提取出月份加入数据中
+library(stringr)
+date <- NYSE$date
+date_str <- str_extract_all(date,"\\d+")
+mon=integer()
+for (i in c(1:6051)){
+  mon_str=date_str[[i]][2]
+  mon[i]=as.numeric(mon_str)
+}
+mon <- as.factor(mon)
+day <- as.factor(NYSE[-(1:5),"day_of_week"])
+df <- data.frame(mon=mon[-(1:5)],day=day, arframe)
+
+lm.fit <- lm(log_volume~.,data=df[y,])
+lm.pred <- predict(lm.fit, df[!y,])
+
+v <- var(df[!y,"log_volume"])
+1-mean((lm.pred-df[!y,"log_volume"])^2)/v
+# R^2=0.4599 加入month变为 R^2=0.4629
+```

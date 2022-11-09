@@ -1,0 +1,80 @@
+---
+title: "6.5.3 Choosing models using the valudation set approach and cross validation"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1. training and test samples
+```{r ISLR}
+library(ISLR)
+library(leaps)
+set.seed(1)
+train=sample(seq(263),200, replace=FALSE) #1/2
+```
+
+2. best subset selection on training
+```{R}
+# 1.training set
+summary(Hitters)
+is.na(Hitters)
+hitters=na.omit(Hitters)
+regfit.best=regsubsets(Salary~.,data=hitters[train,], nvmax=19)
+summary(regfit.best)
+```
+
+3.fit models to test samples
+```{R}
+test.mat=model.matrix(Salary~., data=hitters[-train,])
+val.errors=rep(NA,19)
+for (i in 1:19) {
+    coefi = coef(regfit.best, id = i)
+    pred = test.mat[, names(coefi)] %*% coefi
+    val.errors[i] = mean((hitters$Salary[-train] - pred)^2)
+}
+val.errors
+which.min(val.errors)
+coef(regfit.best,11)
+```
+
+4.plot the training and test MSE
+```{R}
+plot(sqrt(val.errors), ylab="root MSE", pch=19, type = "b")
+points(sqrt(regfit.best$rss), col = "blue", pch = 19, type = "b")
+legend("topright", legend = c("Training", "Validation"), col = c("blue", "black"), 
+    pch = 19)
+```
+
+5.predict function of test MSE
+```{r}
+predict.regsubsets= function(object,newdata,id,...){
+  form = as.formula(object$call[[2]])
+  test.mat=model.matrix(form,newdata)
+  coefi=coef(object,id=id)
+  test.mat[,names(coefi)]%*%coefi
+}
+```
+
+6.cross-validation
+```{R}
+k=10
+set.seed(105)
+folds=sample(1:k,nrow(hitters), replace=TRUE)
+cv.errors =matrix (NA,k,19, dimnames =list(NULL , 1:19 ))
+for (j in 1:k){
+  best.fit=regsubsets(Salary~.,data = hitters[folds!=j,], nvmax = 19)
+  for (i in 1:19){
+    pred=predict.regsubsets(best.fit, hitters[folds==j,], id=i)
+    cv.errors[j,i]=mean((hitters$Salary[folds==j]-pred)^2)  }
+}
+cv.errors
+mean.cv.errors=apply(cv.errors,2,mean)
+mean.cv.errors
+plot(mean.cv.errors, pch = 19, type = "b")
+coef(best.fit,11)
+```

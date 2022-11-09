@@ -1,0 +1,96 @@
+---
+title: "7.9.9 Boston data set"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.data explo
+```{R}
+library(MASS)
+library(boot)
+library(gam)
+summary(Boston)
+head(Boston)
+attach(Boston)
+```
+
+2.cubic polynomial regression to predict nox using dis
+
+```{R}
+dis.lim=range(dis)
+dis.grid=seq(dis.lim[1],dis.lim[2],0.1)
+fit.1=lm(nox~poly(dis,4))
+preds1=predict(fit.1, newdata=list(dis=dis.grid), se=T)
+plot(dis,nox,xlim=dis.lim, cex=0.5, col="grey")
+lines(dis.grid,preds1$fit,lwd=2,lty=2, col="orange")
+```
+
+3.polynomial regression from 1 to 10
+
+```{R}
+set.seed(1)
+RSS=rep(NA,10)
+for (i in 1:10){
+  poly.fit=glm(nox~poly(dis,i))
+  preds=predict(poly.fit, newdata=list(dis=dis.grid), se=T)
+  RSS[i]=sum((nox-preds$fit)^2)
+}
+plot(RSS, type="b")
+```
+
+4.CV TO SELECT THE OPTIMAL DEGREE
+```{r}
+set.seed(1)
+cv.error=rep(NA,10)
+for (i in 1:10){
+  pl.fit=glm(nox~poly(dis,i))
+  cv.error[i]=cv.glm(Boston,pl.fit, K=10)$delta
+}
+plot(cv.error,  type="b")
+```
+
+5.spline
+```{R}
+attr(bs(dis, df=4), "knots")
+library(splines)
+fit.bs=lm(nox~bs(dis,knots = c(3.2))) #basic function
+preds=predict(fit.bs, newdata=list(dis=dis.grid), se=T)
+plot(dis,nox,xlim=dis.lim, cex=0.5, col="grey")
+lines(dis.grid, preds$fit,lwd=2,lty=2, col="orange")
+lines(dis.grid, preds$fit+2*preds$se, lty=3, col="red")
+lines(dis.grid, preds$fit-2*preds$se, lty=3, col="red")
+```
+
+6. spline with a range of degrees of freedom
+```{R}
+rss = rep(0,18) 
+colours = rainbow(18) 
+plot(Boston$dis,Boston$nox,xlab="Distance", ylab="Nox values", main="Regression splines using degrees from 3-10")
+for (i in 3:20){
+  fit.bs=glm(nox~bs(dis,df=i))
+  preds=predict(fit.bs, newdata=list(dis=dis.grid), se=T)
+  rss[i-2]=sum((nox-preds$fit)^2)
+  lines(dis.grid, preds$fit, col=colours[i-2])
+}
+legend(10,0.8,legend=3:20, col=colours[1:18],lty=1,lwd=2)
+plot(rss, type="b")
+which.min(rss)+2
+```
+
+7.spline with cv
+```{R}
+set.seed(1)
+cv.error=rep(NA,18)
+for (i in 3:20){
+  pl.fit=glm(nox~ns(dis,df=i))
+  cv.error[i-2]=cv.glm(Boston,pl.fit, K=10)$delta
+}
+plot(cv.error,  type="b")
+which.min(rss)+2
+plot(Boston$dis,Boston$nox,xlab="Distance", ylab="Nox values", main="Regression splines with best model", cex=0.5)
+best.fit=glm(nox~ns(dis,df=8))
+lines(dis.grid, preds$fit, col="red")
+```

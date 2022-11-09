@@ -1,0 +1,28 @@
+---
+title: "3.2 Linear Discriminant Analysis"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+1.LDAæ‹Ÿåˆ
+
+```{R}
+library(ISLR)
+library(MASS)
+attach(Smarket)
+train=(Year<2005)
+lda.fit <- lda(Direction~Lag1+Lag2, data=Smarket, subset=train)
+ld?.fit
+plot(lda.fit)
+```
+
+2.LDA?¢„æµ?
+```{R}
+Smarket.2005 <- subset(Smarket, Year==2005)
+lda.pred=predict (lda.fit , Smarket.2005)
+head(data.frame(lda.pred))
+lda.pred.class=lda.pred$class
+table(lda.pred.class,Smarket.2005$Direction)
+mean(lda.pred.class==Smar?et.2005$Direction)
+```

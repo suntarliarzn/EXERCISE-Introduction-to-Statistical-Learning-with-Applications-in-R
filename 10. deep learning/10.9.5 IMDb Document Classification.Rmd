@@ -1,0 +1,79 @@
+---
+title: "10.9.5 IMDb Document Classification"
+output: github_document
+---
+
+# 1.data preparation
+```{R}
+library(keras)
+library(tensorflow)
+max_feature <- 10000
+imdb <- dataset_imdb(num_words=max_feature)
+c(c(x_train,y_train),c(x_test,y_test)) %<-% imdb
+```
+
+# 2.decode word
+```{R}
+word_index <- dataset_imdb_word_index()
+decode_review <- function(text, word_index){
+  word <- names(word_index)
+  idx <- unlist(word_index, use.names=FALSE)
+  word <- c("<PAD>", "<START>", "<UNK>", "<UNUSED>", word)
+  idx <- c(0:3, idx+3)
+  words <- word[match(text,idx,2)]
+  paste(words, collapse=" ")
+}
+decode_review(x_train[[1]][1:12], word_index)
+```
+
+# 3.one-hot encoding
+```{R}
+library(Matrix)
+one_hot <- function(sequences, dimension){
+  seqlen <- sapply(sequences,length) #提取出每个频率的长度
+  n <- length(seqlen) #n=25000
+  rowind <- rep(1:n, seqlen) #document number of each word
+  colind <- unlist(sequences)
+  sparseMatrix(i=rowind, j=colind, dims=c(n,dimension))
+}
+x_train_1h <- one_hot(x_train,10000)
+x_test_1h <- one_hot(x_test,10000)
+dim(x_train_1h)
+head(x_train_1h)
+nnzero(x_train_1h)/(25000*10000)
+
+
+```
+
+# 4.logistic regression
+```{R}
+set.seed(119)
+test <- sample(seq(along=y_train),2000)
+library(glmnet)
+lm.fit <- glmnet(x_train_1h[-test,],y_train[-test], faminly="binomial", standardize=FALSE)
+lm.pred <- predict(lm.fit, x_train_1h[test,])>0
+accuracy <- function(pred,truth){
+  mean(drop(pred)==drop(truth))
+}
+acc.lm <- apply(lm.pred,2, accuracy, y_train[test]>0)
+# 0.63
+lm.test.pred <- predict(lm.fit, x_test_1h)>0
+acc.test.lm <- apply(lm.test.pred,2, accuracy, y_test>0)
+par(mar=c(4,4,4,4), mfrow=c(1,1))
+plot(-log(lm.fit$lambda), acc.lm)
+plot(-log(lm.fit$lambda), acc.test.lm)
+```
+
+# 5.neural network
+```{R}
+model <- keras_model_sequential()
+model %>% layer_dense(units=16,activation="relu", input_shape = c(10000)) %>% 
+  layer_dense(units=16,activation="relu") %>% layer_dense(units=1, activation = "sigmoid")
+
+model %>% compile(optimizer="rmsprop", loss="binary_crossentropy", metrics=c("accuracy"))
+history <- model %>% fit(x_train_1h[-test,], y_train[-test], epochs=20, batch_size=512, validation_data=list(x_train_1h[test,], y_train[test]))
+# 0.8765
+# test dataset
+history <- model %>% fit(x_train_1h[-test,], y_train[-test], epochs=20, batch_size=512, validation_data=list(x_test_1h, y_test))
+# 0.84
+```

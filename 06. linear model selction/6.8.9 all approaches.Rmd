@@ -1,0 +1,94 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this exercise, we will predict the number of applications received using the other variables in the College data set.
+(a) Split the data set into a training set and a test set. 
+```{R}
+library(ISLR)
+set.seed(2)
+x=model.matrix(Apps~.,College)[,-1]
+y=College$Apps
+head(College)
+training=sample(1:nrow(College), 2*nrow(College)/3)
+test=-training
+y.test=y[test]
+```
+(b) Fit a linear model using least squares on the training set, and report the test error obtained.
+```{R}
+lm.model=lm(Apps~.,College[training,])
+summary(lm.model)
+lm.predict=predict(lm.model,College[test,])
+lm.test.mse=mean((lm.predict-College$Apps[test])^2)
+lm.test.mse #851358
+```
+(c) Fit a ridge regression model on the training set, with λ chosen by cross-validation. Report the test error obtained.
+```{R}
+library(glmnet)
+rid.mod=cv.glmnet(x[training,],y[training], alpha = 0)
+plot(rid.mod, xvar = "lambda", label = TRUE)
+coef(rid.mod)
+best.rid.lambda=rid.mod$lambda.min
+ridge.pred=predict (rid.mod,s=best.rid.lambda, newx=x[test,])
+ridge.test.mse=mean((ridge.pred-y.test)^2) #892014.8
+ridge.test.mse
+```
+(d) Fit a lasso model on the training set, with λ chosen by crossvalidation. Report the test error obtained, along with the number of non-zero coefficient estimates.
+```{R}
+library(glmnet)
+lasso.mod=cv.glmnet(x[training,],y[training], alpha = 1)
+plot(lasso.mod, xvar = "lambda", label = TRUE)
+coef(lasso.mod) #simplest model
+lasso.mod$lambda.min
+lasso.pred=predict (lasso.mod,s=lasso.mod$lambda.min, newx=x[test,])
+lasso.test.mse=mean((lasso.pred-y.test)^2) #833795.9
+lasso.test.mse
+lasso.coef = predict(lasso.mod, type="coefficients", s=lasso.mod$lambda.min)[1:18,] #full model
+```
+
+(e) Fit a PCR model on the training set, with M chosen by crossvalidation. Report the test error obtained, along with the value of M selected by cross-validation.
+```{R}
+library(pls)
+set.seed(2)
+pcr.fit=pcr(Apps~., data=College[training,], scale=TRUE, validation="CV")
+summary(pcr.fit)
+validationplot(pcr.fit)
+validationplot(pcr.fit,val.type="MSEP")
+pcr.pred=predict(pcr.fit,College[test,],ncomp=16)
+pcr.test.mse=mean((pcr.pred-y.test)^2) # 819515.7
+
+#pcr.pred=predict(pcr.fit,College[test,],ncomp=17)
+mean((pcr.pred-y.test)^2) # 1912638
+```
+(f) Fit a PLS model on the training set, with M chosen by crossvalidation. Report the test error obtained, along with the value of M selected by cross-validation.
+```{R}
+library(pls)
+set.seed(2)
+pls.fit=plsr(Apps~., data=College[training,], scale=TRUE, validation="CV")
+summary(pls.fit)
+validationplot(pls.fit)
+validationplot(pls.fit,val.type="MSEP")
+pls.pred=predict(pls.fit,College[test,],ncomp=6)
+pls.test.mse=mean((pls.pred-y.test)^2) # 824053.8
+
+#pls.pred=predict(pls.fit,College[test,],ncomp=17)
+mean((pls.pred-y.test)^2) # 1093608
+```
+(g) Comment on the results obtained. How accurately can we predict the number of college applications received? Is there much difference among the test errors resulting from these five approaches?
+```{R}
+mse=c(lm.test.mse,ridge.test.mse,lasso.test.mse,pcr.test.mse,pls.test.mse)
+barplot(mse,xlab="Models", ylab="test mse", names=c("lm","ridge","lasso", "pcr", "pls"))
+
+lm.r=summary(lm.model)$adj.r.squared
+test.avg = mean(y.test)
+ridge.r=1-mean((ridge.pred-y.test)^2)/mean((test.avg-y.test)^2)
+lasso.r=1-mean((lasso.pred-y.test)^2)/mean((test.avg-y.test)^2)
+pcr.r=1-mean((pcr.pred-y.test)^2)/mean((test.avg-y.test)^2)
+pls.r=1-mean((pls.pred-y.test)^2)/mean((test.avg-y.test)^2)
+barplot(c(lm.r, ridge.r, lasso.r, pcr.r, pls.r), xlab = "Models", ylab="R2", names=c("lm","ridge","lasso", "pcr", "pls") )
+```

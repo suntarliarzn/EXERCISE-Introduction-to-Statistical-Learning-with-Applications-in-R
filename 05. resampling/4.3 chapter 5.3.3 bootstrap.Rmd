@@ -1,0 +1,51 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1.准备数据集
+```{R}
+library(ISLR)
+install.packages("boot")
+library(boot)
+xy.fn <- function(data, index){
+x = data$X[index];
+y = data$Y[i?dex];     
+return((var(y)-cov(x,y))/(var(x)+var(y)-2*cov(x,y)))
+}
+xy.fn(Portfolio, 1:100)
+```
+
+2.boot测试
+```{R}
+xy.fn(Portfolio, 1:100)
+boot(Portfolio, xy.fn, R=1000)
+```
+
+3.模拟一次boot
+```{R}
+xy.fn <- function(data, index){
+  SP=sample(100,index, replac? = T);
+  x = data$X[SP];
+  y = data$Y[SP];     
+  return((var(y)-cov(x,y))/(var(x)+var(y)-2*cov(x,y)))}
+xy.fn(Portfolio, 100)
+```
+
+4.线性拟合bootstrap
+```{R}
+#1.设计带index抽样的函数模型。
+boot.fn <- function(data,index){
+    coefficients(lm(mpg~horsepower? data=Auto, subset=index))
+}
+boot1.fn <- function(data){
+  coefficients(lm(mpg~horsepower, data=Auto))
+  }
+boot(Auto, boot.fn, R=1000) # b1= -0.157 se=0.007
+ 
+```

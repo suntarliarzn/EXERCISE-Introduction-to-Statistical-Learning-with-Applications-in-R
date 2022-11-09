@@ -1,0 +1,70 @@
+---
+title: "9.6.1 Support Vector Classifier"
+output: github_document
+---
+
+# 1.data preparation
+```{R}
+set.seed(10111)
+x = matrix(rnorm(40), 20, 2)
+y = rep(c(-1,1), c(10,10))
+x[y == 1,] = x[y == 1,] + 1
+plot(x, col=y+3, pch=19)
+```
+
+# 2. svm function
+```{R}
+# install.packages("e1071")
+library(e1071)
+dat=data.frame(x, y=as.factor(y))
+svm.fit=svm(y~., data=dat, kernel="linear", cost=20, scale=F)
+summary(svm.fit)
+plot(svm.fit, dat)
+svm.fit$index
+```
+
+# 3.make a better plot
+```{R}
+make.grid = function(x, n = 75) {
+  grange = apply(x, 2, range) #range of each column of x1 and x2
+  x1 = seq(from = grange[1,1], to = grange[2,1], length = n)
+  x2 = seq(from = grange[1,2], to = grange[2,2], length = n)
+  expand.grid(X1 = x1, X2 = x2)
+}
+xgrid= make.grid(x)
+ygrid= predict(svm.fit, xgrid)
+plot(xgrid, col = c("red","blue")[as.numeric(ygrid)], pch = 20, cex = .2)
+points(x, col = y + 3, pch = 19)
+points(x[svm.fit$index,], pch = 5, cex = 2)
+```
+
+# 4.draw the margin
+```{R}
+beta = drop(t(svm.fit$coefs)%*%x[svm.fit$index,]) # drop converts a table into an array
+beta0 = svm.fit$rho
+plot(xgrid, col = c("red","blue")[as.numeric(ygrid)], pch = 20, cex = .2)
+points(x, col = y + 3, pch = 19)
+points(x[svm.fit$index,], pch = 5, cex = 2)
+abline(beta0 / beta[2], -beta[1] / beta[2])
+abline((beta0 - 1) / beta[2], -beta[1] / beta[2], lty = 2)
+abline((beta0 + 1) / beta[2], -beta[1] / beta[2], lty = 2)
+```
+
+# 5.cross-validation
+```{R}
+set.seed(1)
+tune.out=tune(svm, y~., data=dat, kernel ="linear",ranges=list(cost=seq(0.001,100,10)))
+summary(tune.out)
+bestmod=tune.out$best.model
+```
+
+#6. prediction on test dataset
+```{R}
+set.seed(1)
+xtest=matrix(rnorm (20*2), ncol=2)
+ytest=sample(c(-1,1) , 20, rep=TRUE)
+xtest[ytest==1,]=xtest[ytest ==1,] + 1
+testdat=data.frame(X1=xtest[,1],X2=xtest[,2], y=as.factor(ytest))
+ypred=predict(bestmod, testdat)
+table(predict=ypred,truth=testdat$y)
+```

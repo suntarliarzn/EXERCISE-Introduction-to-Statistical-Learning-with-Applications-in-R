@@ -1,0 +1,52 @@
+---
+title: "10.10.7 Default dataset"
+output: github_document
+---
+
+# 1.data preparation
+```{R}
+library(keras)
+library(ISLR2)
+library(tensorflow)
+head(Default)
+str(Default)
+summary(Default)
+```
+
+# 2.training data
+```{R}
+attach(Default)
+dim(Default)
+train=sample(nrow(Default),8000)
+x=Default[,-1]
+x.train=x[train,]
+y.train=default[train]
+y.test=default[-train]
+```
+
+# 3.lm
+```{R}
+library(glmnet)
+lm.fit <- glm(default~.,data=Default,subset=train,family="binomial")
+lm.pred <- predict(lm.fit, x[-train,],type="response")
+lm.prob <- ifelse(lm.pred>0.5, "Yes","No")
+table(lm.prob,y.test)
+# (58+9)/(1904+9+58+29)=0.0335
+```
+
+# 4. neural network
+```{R}
+# one-hot encode
+y_train <- to_categorical(as.numeric(y.train))[,-1]
+y_test <- to_categorical(as.numeric(y.test))[,-1]
+x <- cbind(student=as.numeric(x$student),x[,-1])
+x <- as.matrix(x)
+x_train <- x[train,]
+x_test <- x[-train,]
+
+model <- keras_model_sequential()
+model %>% layer_dense(units=10, activation="relu", input_shape=c(3)) %>% layer_dropout(rate=0.4) %>%  layer_dense(units=2, activation = "softmax")
+summary(model)
+model %>% compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=c("accuracy"))
+model %>% fit(x_train,y_train, epochs=10, batch_size=8, validation_data=list(x_test, y_test))
+```

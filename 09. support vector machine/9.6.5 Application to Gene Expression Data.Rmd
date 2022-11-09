@@ -1,0 +1,30 @@
+---
+title: "9.6.5 Application to Gene Expression Data"
+output: github_document
+---
+
+# 1.data exploration
+```{R}
+library(ISLR)
+summary(Khan)
+str(Khan)
+dim(Khan$xtrain)
+dim(Khan$xtest)
+Khan$ytrain
+```
+
+# 2.svm on training dataset
+```{R}
+library(e1071)
+dat <- data.frame(x=Khan$xtrain, y=as.factor(Khan$ytrain))
+svmfit <- svm(y~., data=dat, kernel="linear", cost=100)
+summary(svmfit)
+table(svmfit$fitted,dat$y)
+```
+
+# 3. prediction on test dataset
+```{R}
+dat.test <- data.frame(x=Khan$xtest, y=as.factor(Khan$ytest))
+pred.test <- predict(svmfit, dat.test)
+table(pred=pred.test, true=dat.test$y)
+```

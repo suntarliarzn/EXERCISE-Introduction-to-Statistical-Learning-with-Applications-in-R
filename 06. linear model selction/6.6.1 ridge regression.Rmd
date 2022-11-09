@@ -1,0 +1,83 @@
+---
+title: "6.6.1 ridge regression"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.数据预处理
+```{R ISLR}
+library(ISLR)
+set.seed(1)
+hitters=na.omit(Hitters)
+x=model.matrix(Salary~.,hitters)[,-1]
+y=hitters$Salary
+z=model.matrix(Salary~.,hitters)[,-1]
+```
+
+2.Ridge Regression
+```{R glmnet}
+library(glmnet)
+grid=10^seq(-2,10,length=100)
+ridge.mod=glmnet(x,y,alpha=0,lambda=grid)
+fit.ridge=glmnet(z,y,alpha=0)
+plot(ridge.mod, xvar="lambda", label=TRUE)
+plot(fit.ridge, xvar="lambda", label=TRUE)
+```
+
+3.Interpreting ridge regression
+```{R}
+ridge.mod$lambda[50] #ell2=50 lambda=11498
+coef(ridge.mod)[,50]
+fit.ridge$lambda[30]
+coef(fit.ridge)[,30]
+sqrt(sum(coef(ridge.mod)[-1,50]^2) )
+sqrt(sum(coef(fit.ridge)[-1,30]^2) )
+predict (ridge.mod ,s=50,type="coefficients") # lambda=50
+predict (ridge.mod ,s=11498,type="coefficients")[1:20,] # lambda=11498
+```
+
+4.ridge regression validation
+```{R}
+set.seed(1)
+train=sample(1:nrow(x), nrow(x)/2)
+test=(-train)
+y.test=y[test]
+ridge.mod =glmnet (x[train,],y[train],alpha=0, lambda=grid)
+ridge.pred=predict (ridge.mod,s=10, newx=x[test,]) #lamda=4
+mean(sum((ridge.pred-y.test)^2))
+```
+
+5. ridge regression vs. lm
+```{R}
+lm(y~x, subset=train)
+predict(ridge.mod,s=10,exact=TRUE,newx=x[test,]) # lambda=0
+```
+
+6. ridge regression cross-validation
+```{R}
+set.seed(1)
+cv.ridge=cv.glmnet(x,y,alpha=0)
+# cv.out=cv.glmnet(x[train,],y[train],alpha=0)
+plot(cv.ridge)
+# plot(cv.out)
+bestlamda=cv.ridge$lambda.min
+# bestlamda.out=cv.out$lambda.min
+coef(cv.ridge, s=bestlamda)
+ridge.pred=predict (cv.ridge,s=bestlamda ,newx=x)
+mean((ridge.pred-y)^2) #MSE=112928.6
+# ridge.pred=predict (cv.out,s=bestlamda.out ,newx=x[test ,])
+# mean((ridge.pred -y.test)^2) #MSE=140185.5
+coef(cv.ridge)
+ridge.pred1=predict (cv.ridge,s=cv.ridge$lambda.1se ,newx=x)
+mean((ridge.pred1-y)^2) #MSE=125141.2
+```
+
+7. best model
+```{R}
+# predict(cv.out, type="coefficients", s=bestlamda.out)[1:20,]
+predict(cv.ridge, type="coefficients", s=cv.ridge$lambda.1se)[1:20,]
+predict(fit.ridge, type="coefficients", s=cv.ridge$lambda.1se)[1:20,]
+```

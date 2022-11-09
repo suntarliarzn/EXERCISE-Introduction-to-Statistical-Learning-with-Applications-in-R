@@ -1,0 +1,50 @@
+---
+title: "8.3.4 Boosting"
+output: github_document
+---
+
+
+# 1. load the data
+```{r}
+# install.packages("gbm")
+library(gbm)
+library(MASS)
+attach(Boston)
+set.seed(2)
+dim(Boston)
+train=sample(1:nrow(Boston),300)
+boston.train=Boston[train,]
+boston.test=Boston[-train,]
+medv.test=medv[-train]
+```
+
+# 2. fit the boosting
+```{R}
+set.seed(101)
+boost.boston=gbm(medv~., data=Boston[train,], distribution = "gaussian", n.trees = 10000, interaction.depth = 4)
+summary(boost.boston)
+# We run gbm() with the option distribution="gaussian" since this is a regression problem; if it were a binary classification problem, we would use distribution="bernoulli".
+```
+
+# 3. plot partial dependence plots
+```{r}
+plot(boost.boston, i="rm")
+plot(boost.boston, i="lstat")
+```
+
+# 4.predicting test dataset with different number of trees
+```{R}
+n.trees=seq(from=100, to=10000, by=100)
+boost.boston=gbm(medv~., data=Boston[train,], distribution = "gaussian", n.trees = 10000, shrinkage = 0.001)
+pred.boston=predict(boost.boston, newdata=boston.test, n.trees = n.trees)
+mse.tree=apply((pred.boston-medv.test)^2,2,mean)
+plot(n.trees, mse.tree, pch=19, ylab="MSE", xlab = "trees")
+```
+
+# 5.predictiong test dataset with different lambda
+```{R}
+boost.boston.lambda=gbm(medv~., data=Boston[train,], distribution = "gaussian", n.trees = 10000, shrinkage = 0.01)
+pred.boston.lambda=predict(boost.boston.lambda, newdata=boston.test, n.trees = n.trees)
+mse.tree.lambda=apply((pred.boston.lambda-medv.test)^2,2,mean)
+plot(n.trees, mse.tree.lambda, pch=19, ylab="MSE", xlab = "trees")
+```
